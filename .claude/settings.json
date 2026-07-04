@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "Bash(python3 generate_data.py)",
+      "Bash(/usr/bin/python3 generate_data.py)",
+      "Bash(go build *)",
+      "Bash(/tmp/oas-to-python /Users/shinichi.hashitanikonghq.com/LOCAL_REPO/konnect-code-mode-mcp/mock-api/openapi.json --code-mode --debug --host 0.0.0.0 --port 8080 --base-url http://localhost:8000 -o /tmp/temp_app.py)",
+      "Bash(export GOTOOLCHAIN=local)",
+      "Bash(/usr/bin/python3 -c \"import fastapi, uvicorn; print\\('fastapi', fastapi.__version__\\)\")",
+      "Bash(/usr/bin/python3 -c \"import json; print\\(len\\(json.load\\(open\\('mock-api/data/temperatures.json'\\)\\)\\), 'records'\\)\")",
+      "Bash(/usr/bin/python3 -c \"import json; print\\('cities', len\\(json.load\\(open\\('mock-api/data/cities.json'\\)\\)\\), '| temps', len\\(json.load\\(open\\('mock-api/data/temperatures.json'\\)\\)\\)\\)\")",
+      "WebFetch(domain:gofastmcp.com)",
+      "Bash(grep -rn 'CodeMode\\\\|MontySandbox\\\\|max_duration\\\\|max_memory' __TRACKED_VAR__/oas-to-python/internal/generator/generator.go)",
+      "WebFetch(domain:pypi.org)"
+    ]
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "World City Monthly Temperatures API",
+    "description": "世界主要都市の月平均気温 (摂氏) を提供します。世界100都市、それぞれ10年分の気温データが取得可能です。気温データは都市毎にIDを指定して取得するので、対象都市のIDが分からない場合にはまず都市の一覧を取得してから、IDを特定した後に気温データを取得する必要があります。",
+    "version": "2.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:8000" }
+  ],
+  "paths": {
+    "/cities": {
+      "get": {
+        "operationId": "listCities",
+        "summary": "都市の一覧（idと都市名のみ）を取得",
+        "description": "全100都市の id と都市名を返す。",
+        "responses": {
+          "200": {
+            "description": "都市一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/CityListItem" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cities/{city_id}": {
+      "get": {
+        "operationId": "getCity",
+        "summary": "都市の気温データを取得",
+        "parameters": [
+          {
+            "name": "city_id",
+            "in": "path",
+            "required": true,
+            "description": "対象都市の id",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "都市の気温データ",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/City" }
+              }
+            }
+          },
+          "404": { "description": "指定IDの都市が存在しません。" }
+        }
+      }
+    },
+    "/temperatures": {
+      "get": {
+        "operationId": "getTemperatures",
+        "summary": "指定都市の気温データを取得",
+        "description": "city_id（必須）で1都市分の気温レコード（既定 120 件 = 12 か月 x 10 年）を返します。month/year で追加絞り込み可能です。",
+        "parameters": [
+          {
+            "name": "city_id",
+            "in": "query",
+            "required": true,
+            "description": "対象都市の id（必須）",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "description": "月 (1-12) で絞り込み",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 12 }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "description": "年で絞り込み",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "気温レコードの配列",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/TemperatureRecord" }
+                }
+              }
+            }
+          },
+          "404": { "description": "指定IDの都市が存在しません。" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "ヘルスチェック",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "type": "object" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CityListItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "city": { "type": "string", "example": "Tokyo" }
+        },
+        "required": ["id", "city"]
+      },
+      "City": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "city": { "type": "string", "example": "Tokyo" },
+          "country": { "type": "string", "example": "Japan" },
+          "latitude": { "type": "number", "format": "float", "example": 35.68 },
+          "longitude": { "type": "number", "format": "float", "example": 139.69 }
+        },
+        "required": ["id", "city", "country", "latitude", "longitude"]
+      },
+      "TemperatureRecord": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "city_id": { "type": "integer", "description": "cities.id への外部キー", "example": 1 },
+          "year": { "type": "integer", "example": 2025 },
+          "month": { "type": "integer", "example": 3 },
+          "temp": { "type": "number", "format": "float", "description": "月平均気温 (摂氏)", "example": 9.8 }
+        },
+        "required": ["id", "city_id", "year", "month", "temp"]
+      }
+    }
+  }
+}
