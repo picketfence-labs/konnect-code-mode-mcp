@@ -1,0 +1,66 @@
+# mock-api（世界都市気温 API）を Minikube にデプロイするマニフェスト。
+# Namespace / Deployment / Service(type: LoadBalancer) を定義する。
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-api
+  namespace: demo
+  labels:
+    app: mock-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mock-api
+  template:
+    metadata:
+      labels:
+        app: mock-api
+    spec:
+      containers:
+        - name: mock-api
+          image: mock-api:0.1.0
+          # minikube にローカルビルド/ロードしたイメージを使う（外部レジストリ不要）
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-api
+  namespace: demo
+  labels:
+    app: mock-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: mock-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

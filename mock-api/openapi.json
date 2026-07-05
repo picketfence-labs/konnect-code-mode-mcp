@@ -6,7 +6,14 @@
     "version": "2.0.0"
   },
   "servers": [
-    { "url": "http://localhost:8000" }
+    {
+      "url": "http://mock-api.demo.svc.cluster.local",
+      "description": "Kong DP（クラスタ内）から参照する Kubernetes Service DNS。Service demo/mock-api の port 80（→ targetPort 8000）に転送される。Konnect に登録する上流 URL はこれを用いる。"
+    },
+    {
+      "url": "http://localhost:8088",
+      "description": "ローカル検証用。kubectl -n demo port-forward svc/mock-api 8088:80 で転送したポート。"
+    }
   ],
   "paths": {
     "/cities": {
