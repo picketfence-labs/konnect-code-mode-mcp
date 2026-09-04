@@ -32,8 +32,16 @@
   としての読み取り）として引き続き有用なため、削除・移動はしない
 
 ## 想定していたこと vs 実際どうだったか
-（未実施。今後Kong Operatorインストール手順を`deploy/kong-operator/`等に実際に移植した際に
-このセクションを更新する）
+- 想定: 社内SE手順書のHelm/CRD定義をそのまま`deploy/kong-operator/`に移植すれば済む
+- 実際: 手順書の値（Kong Gateway `3.14`、DataPlane replicas `3`）と、実際に稼働している
+  クラスタの値（`3.15`、replicas `1`）が異なっていた。再現性を優先し、**実機で確認済みの値**
+  （`3.15`、replicas `1`）を採用した。また手順書のimage tag（`20260623`）は
+  [ADR-0005](0005-kong-operator-image-tag-upgrade.md)で`20260904`へ更新済みのため、
+  そちらの決定を継承した
+- KPATをファイルに残さないよう、`KonnectAPIAuthConfiguration`はテンプレート化
+  （`konnect-resources.yaml.template`、`${KPAT}`を`envsubst`で展開する運用）にした
+- 「新規cloneからのゼロ構築」の実機再現（`docs/design-brief.md`5章の検証基準）は、既存の
+  Konnect Control Plane/DataPlaneを壊すコストが高いため今回は見送った（未実施）
 
 ## 影響・トレードオフ
 - 移植作業自体に一定のコストがかかる（社内SE手順書のHelm/CRD定義をリポジトリ内のマニフェストに

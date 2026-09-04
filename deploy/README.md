@@ -1,5 +1,9 @@
 # Minikube デプロイ手順
 
+本ファイルは mock-api のデプロイ手順。Kong Operator インストール + Konnect
+Control Plane/DataPlane 接続手順は [deploy/kong-operator/README.md](kong-operator/README.md)
+を参照。
+
 mock-api（世界都市気温 API）を Minikube にデプロイする手順。
 Service は `ClusterIP`。クラスタ内（Kong DP など）は Service DNS で参照し、
 **mock-api 単体の直接ヘルスチェックは `kubectl port-forward`**（固定ポート `8088`）で行う。
