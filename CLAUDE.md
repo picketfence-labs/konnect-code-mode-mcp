@@ -156,11 +156,13 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 | `deploy/mock-api/` | mock-api の K8s マニフェスト（Namespace/Deployment/Service ClusterIP） |
 | `deploy/kong/` | mock-api を Kong DP 経由でも公開する KongService/KongRoute（`/mock-api`） |
 | `deploy/kong-operator/` | Kong Operator インストール + Konnect Control Plane/DataPlane 接続手順（一本化済み） |
+| `chat-ui/` | Chat UI（Next.js + Vercel AI SDK + `@ai-sdk/mcp`。Gemini接続、ADR-0004） |
+| `deploy/chat-ui/` | Chat UI の K8s マニフェスト（Namespace demo/Deployment/Service ClusterIP） |
 | `docs/design-brief.md` | 基本設計（現在＋将来の要件・アーキテクチャ・優先順位。本ファイルの上位情報源） |
 | `docs/decisions/` | ADR（判断ポイントの記録） |
 | `docs/troubleshooting-log.md` | 想定通りに動かなかったことの記録 |
 
-今後追加予定: 生成 FastMCP サーバー、Chat UI、ログ基盤。
+今後追加予定: 生成 FastMCP サーバー、ログ基盤。
 
 ## 未確定事項（要確認）
 
@@ -175,17 +177,17 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
   --set env.ENABLE_CONTROLLER_KONNECT=true`（社内SE手順書 `Kong Operator Context Mesh - SE's.md`
   参照。手順自体は[deploy/kong-operator/README.md](deploy/kong-operator/README.md)へ取り込み済み）
 
-残る未解決事項:
-- 現在 Konnect が実運用で使用している FastMCP のバージョン（3.3.1 or 3.4.x）は未確認
-  （`oas-to-python` の `runtime-requirements.txt` は 3.3.1 にピン留めだが、本番 Control Plane
-  〈`mcp-server-code-gen`〉が同じ生成経路・同じバージョンを使っているかは未確認）
-以下2件は2026-09-04の開発セッションで**解決済み**:
+以下3件は2026-09-04の開発セッションで**解決済み**:
 - ~~Kong Operator の image tag アップグレード検証~~ → **解決**: `20260904`へアップグレードし
   ステータス確認不可バグの解消を確認（[ADR-0005](docs/decisions/0005-kong-operator-image-tag-upgrade.md)）
 - ~~実運用手順の本リポジトリへの一本化~~ → **解決**: Kong Operatorインストール・Konnect
   Control Plane/DataPlane接続手順を[deploy/kong-operator/](deploy/kong-operator/README.md)へ
   取り込み済み（`~/LOCAL_REPO/context-mesh`への依存を解消。詳細:
   [ADR-0003](docs/decisions/0003-repo-consolidation.md)）
+- ~~現在 Konnect が実運用で使用している FastMCP のバージョン（3.3.1 or 3.4.x）~~ → **解決**:
+  既存のMCP Server（`world-monthly-temperature`）にJSON-RPC `initialize`で直接ハンドシェイクし、
+  `serverInfo.version`が`3.3.1`であることを確認（`oas-to-python`の`runtime-requirements.txt`
+  ピン留めと一致）。詳細: [design-brief.md 検証ログ](docs/design-brief.md)
 
 ## 参照
 

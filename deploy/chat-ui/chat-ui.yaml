@@ -1,0 +1,76 @@
+# Chat UI（Next.js + Vercel AI SDK + MCP client）を Minikube にデプロイするマニフェスト。
+# Namespace は mock-api と同じ demo（deploy/mock-api/mock-api.yaml で作成済み）を使う。
+# MCP_SERVER_URL / GEMINI_MODEL は Deployment に直接、GEMINI_API_KEY は
+# 手動作成した Secret（chat-ui-secrets）から envFrom で注入する
+# （deploy/README.md「Chat UI」節の手順を先に実施すること）。
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-ui
+  namespace: demo
+  labels:
+    app: chat-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-ui
+  template:
+    metadata:
+      labels:
+        app: chat-ui
+    spec:
+      containers:
+        - name: chat-ui
+          image: chat-ui:0.1.0
+          # minikube にローカルビルド/ロードしたイメージを使う（外部レジストリ不要）
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: MCP_SERVER_URL
+              # Kong DP の Service 名は Operator が動的に付与するため、デプロイ時に
+              # `kubectl get svc -n default -l app=dataplane,gateway-operator.konghq.com/dataplane-service-type=ingress`
+              # で確認し、実際の値に置き換えること（deploy/README.md 参照）
+              value: "http://dataplane-ingress-dataplane-9zrnp.default.svc.cluster.local/mcp/world-monthly-temperature"
+            - name: GEMINI_MODEL
+              value: "gemini-3.5-flash"
+          envFrom:
+            - secretRef:
+                name: chat-ui-secrets
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-ui
+  namespace: demo
+  labels:
+    app: chat-ui
+spec:
+  # Mac からは kubectl port-forward (localhost:3000) を使うため ClusterIP で十分
+  type: ClusterIP
+  selector:
+    app: chat-ui
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000

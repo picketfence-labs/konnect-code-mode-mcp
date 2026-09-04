@@ -106,3 +106,17 @@
   起動後は`curl http://localhost/mock-api/health`等がKong経由（`X-Kong-Upstream-Latency`
   ヘッダーで確認）で200を返すことを確認済み
 - **コスト**: 軽微（利用者への依頼1往復のみ）
+
+## 2026-09-04 `deploy/README.md`のKong DP Service検索コマンドのラベルセレクタが実在しない
+- **何を期待していたか**: `kubectl get svc -n default -l gateway-operator.konghq.com/dataplane-name
+  -o wide`でKong DPのLoadBalancer Service（`dataplane-ingress-dataplane-*`）が見つかる
+- **実際どうだったか**: `No resources found`。Chat UI用にMCP_SERVER_URLへ埋める内部Service名を
+  確認しようとして気づいた
+- **原因**: 実際にServiceへ付与されているラベルは`gateway-operator.konghq.com/dataplane-name`
+  ではなく`app=dataplane`と`gateway-operator.konghq.com/dataplane-service-type=ingress`
+  （`kubectl get svc ... -o jsonpath='{.metadata.labels}'`で確認）。以前このコマンドを
+  ドキュメント化した際に未検証のまま記載したと推測
+- **対処・回避方法**: `deploy/README.md`内の2箇所（mock-apiのKong DP到達確認手順・Chat UIの
+  MCP_SERVER_URL確認手順）を`-l app=dataplane,gateway-operator.konghq.com/dataplane-service-type=ingress`
+  に修正
+- **コスト**: 軽微（`kubectl get svc -o wide`で全件確認して気づいた）
