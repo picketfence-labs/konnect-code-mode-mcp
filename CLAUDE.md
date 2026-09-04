@@ -163,9 +163,21 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 
 ## 未確定事項（要確認）
 
-- Konnect UI で Code Mode を有効化する手段の有無（UI トグル or spec 指定）。→ Shinichi 確認。
-- 現テナントで MCP Composer / Context Mesh が利用可能か（Technical Preview 段階）。→ Shinichi 確認。
-- Minikube 上の Kong Operator への `mcp-server` feature gate 投入手順。
+以下3件は Obsidian Vault 側の既存知見・社内SE手順書により**解決済み**（2026-09-04、Design Brief
+レビューで判明。単に本ファイルへの反映が漏れていた）:
+- ~~Konnect UI で Code Mode を有効化する手段の有無~~ → **解決**: トグル自体が存在しない。
+  Code Mode は常時有効（Control Plane 側で `codeMode: true` がハードコード）
+- ~~現テナントで MCP Composer / Context Mesh が利用可能か~~ → **解決**: 利用者の
+  `hashi-sandbox` テナントで実際に稼働中（Analytics 実データあり）。一般 GA は2026年9〜10月予定
+- ~~Minikube 上の Kong Operator への `mcp-server` feature gate 投入手順~~ → **解決**:
+  `helm upgrade --install kong-operator kong/kong-operator --set env.FEATURE_GATES=mcp-server
+  --set env.ENABLE_CONTROLLER_KONNECT=true`（社内SE手順書 `Kong Operator Context Mesh - SE's.md`
+  参照。項目2「リポジトリの一本化」でこの手順自体を本リポジトリへ取り込む予定）
+
+残る未解決事項:
+- 現在 Konnect が実運用で使用している FastMCP のバージョン（3.3.1 or 3.4.x）は未確認
+  （`oas-to-python` の `runtime-requirements.txt` は 3.3.1 にピン留めだが、本番 Control Plane
+  〈`mcp-server-code-gen`〉が同じ生成経路・同じバージョンを使っているかは未確認）
 - **（最優先、2026-09-04追加）Kong Operator の image tag アップグレード検証**: 現在の実運用手順
   （社内SE手順書、`~/LOCAL_REPO/context-mesh`起点。本リポジトリには未取り込み）は
   `docker.io/kong/nightly-kong-operator:20260623` に固定しているが、これは当時「デプロイしても

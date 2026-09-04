@@ -28,8 +28,10 @@ Kong Konnect Context Mesh を使い、AIエージェントのLLMトークン量�
    Kong Operator インストール手順（Helm/CRD 定義）を `deploy/kong-operator/` 等に取り込む。
 3. mock-api の Kong DP 経由到達（`deploy/kong/mock-api-kong.yaml` の KongService/KongRoute、
    `minikube tunnel`）を実機で検証する（前回セッション時点で未検証のまま）。
-4. CLAUDE.md の「未確定事項（要確認）」（Konnect UI での Code Mode 有効化手段、現テナントでの
-   MCP Composer 利用可否）を解消する。
+4. **CLAUDE.md の「未確定事項（要確認）」を最新化する**（2026-09-04レビューで判明: 3件のうち
+   2件は Obsidian Vault 側の既存知見で、1件は今回発見した社内SE手順書で、いずれも**既に
+   解決済み**。新規調査は不要で、CLAUDE.md へ解決内容を書き戻すだけで完了する。実施済み
+   → CLAUDE.md「未確定事項」参照）。
 
 ### 将来（今回はやらないが、優先順位2番目以降として控える）
 
@@ -75,21 +77,30 @@ flowchart TB
 
 - Konnect Control Plane（`context-mesh-demo`）⇄ Kong Operator（`mcp-server` feature-gate）⇄
   K8s DataPlane（`kong/kong-gateway:3.14`、replicas 3）
-- mock-api（気温データ、FastAPI、ClusterIP）を Kong DP 経由（`KongService`/`KongRoute`、
-  `/mock-api`）で公開。Mac 側到達は `minikube tunnel`（**未検証**）
+- mock-api（気温データ、FastAPI、ClusterIP）は、(a) クラスタ内から Service DNS で直接到達可能
+  （MCP Server Pod が使う経路）、(b) `KongService`/`KongRoute`（`/mock-api`、strip_path）で
+  Kong DP 経由でも公開している（Mac からの直接到達性確認用、`minikube tunnel`必要・**未検証**）。
+  **注意（2026-09-04レビューで訂正）**: (b)の`/mock-api`ルートは mock-api への直接アクセス用の
+  デバッグ経路であり、**AIエージェントが実際に接続するデモ本体のMCPエンドポイントとは別物**。
+  実際の接続URLはKonnect UI上でMCP Server を定義した時点で `/mcp/<server名>` 形式
+  （社内SE手順書の `/mcp/flights-service` 等のパターンを参照）で確定するはずだが、
+  本デモではまだ確定していない（次回実機検証時に本ファイル・CLAUDE.mdへ追記する）
 - Konnect UI 上で mock-api の OpenAPI spec を「Source」として登録 → MCP Server
   （`search`/`get-schema`/`execute` の3ツール）が自動生成 → Code Mode（FastMCP `CodeMode`
   transform）でクエリごとに動的コード生成・サンドボックス実行
 
-**既存の判断ポイント（ADR化対象。`docs/decisions/`未整備、Bootstrap Checklist Step 1.5で追加予定）**:
-- LoadBalancer(MetalLB) vs ClusterIP+`minikube tunnel` vs `kubectl port-forward` →
-  ClusterIP+tunnel/port-forward併用に決定済み（2026-09-04）
-- Kong Operator image tag: バグ回避のため`nightly:20260623`に固定 → 新タグでの再検証待ち
-  （**今回の最優先事項**）
-- デモAPI: SE手順書記載のサンプル（Flights/OpenWeather）ではなく独自のmock-api（気温データ）を
-  採用 → 決定済み（再現性・カスタマイズ性を優先）
-- 実運用の起点: `~/LOCAL_REPO/context-mesh`（参照専用clone）から本リポジトリへ一本化 →
-  決定済み（2026-09-04、利用者の判断）
+**既存の判断ポイント（ADR化済み、`docs/decisions/`参照。ここでは概要のみ）**:
+- [0001](decisions/0001-mock-api-service-exposure.md): mock-apiの公開方式
+  （LoadBalancer/MetalLB → ClusterIP + `minikube tunnel`/`kubectl port-forward`併用）
+- [0002](decisions/0002-demo-api-choice.md): デモAPIの選択（SE手順書のFlights/OpenWeather
+  サンプルではなく独自のmock-apiを採用）
+- [0003](decisions/0003-repo-consolidation.md): 実運用手順の一本化先
+  （`~/LOCAL_REPO/context-mesh`から本リポジトリへ）
+- [0004](decisions/0004-chat-ui-tech-stack.md): Chat UIの技術スタック
+  （Next.js + Vercel AI SDK + `@ai-sdk/mcp`）
+
+上記いずれも今回の最優先事項（Kong Operator image tagアップグレード検証）はまだADR化されて
+いない。検証完了後、結果に応じて新規ADRとして記録する。
 
 ## 4. 技術スタック
 
@@ -116,6 +127,14 @@ flowchart TB
   既に確認済み（Obsidian Vault `07-Sources/repos/konnect-code-mode-mcp` 参照）。
   Kong Operator の nightly tag は `docker.io/kong/nightly-kong-operator` のタグ一覧から、
   後方互換性を確認しつつ最新に近いものを選定する
+- **リポジトリの一本化（要件2）**: 本リポジトリのみを新規に clone した状態から、Kong Operator
+  インストール〜Konnect UI操作〜デモクエリ実行までの一連の手順が、`~/LOCAL_REPO/context-mesh`
+  への依存やそちらの手順書を別途参照する必要なしに完了できることを確認する
+  （2026-09-04レビューで追加。従来この項目には検証基準が無かった）
+- **CLAUDE.mdの未確定事項解消（要件4）**: 本ファイル・CLAUDE.mdへの反映内容
+  （Code Mode常時有効・現テナントでのMCP Composer稼働状況・feature gate投入コマンド）が、
+  実際にKong Operatorをインストールした際の実機の挙動と一致することを確認する
+  （2026-09-04レビューで追加。ドキュメント反映のみで済ませず、実機で裏取りする）
 
 ## 6. 成果物
 
@@ -171,3 +190,10 @@ flowchart TB
   （[ADR-0004](decisions/0004-chat-ui-tech-stack.md)）。合わせて、利用者個人のClaude Codeから
   デモへ継続的に接続する設定（`--scope user`）はObsidian Vaultセッション側の責務と明確化した
   （本リポジトリの開発セッションのスコープ外）。
+- 2026-09-04（レビュー）: 利用者からの依頼でObsidian Vaultセッションが本ファイルをレビューし、
+  4件の指摘を反映。(1) CLAUDE.mdの「未確定事項」3件はいずれも既に解決済みだったが未反映
+  だったため書き戻した（項目4を「新規調査不要、反映のみ」に修正）。(2) `KongRoute /mock-api`が
+  デモ本体のMCPエンドポイントと誤解されかねない記述をADR-0001・本ファイル3章で訂正し、
+  実際の接続URLは未確定である旨を明記。(3) 要件2（リポジトリ一本化）・要件4（未確定事項解消）に
+  検証基準が無かったため5章に追加。(4) 3章「既存の判断ポイント」の記述が
+  「ADR未整備・追加予定」のまま古くなっていたため、実際のADR 0001〜0004へのリンクに置き換え。

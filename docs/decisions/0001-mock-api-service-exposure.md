@@ -18,8 +18,11 @@ Macから直接ルーティングできない制約がある。
    `8088`にport-forwardする。シンプルで確実に動くが、Kong DP経由の本番相当ルートは検証できない。
 3. **ClusterIP + `minikube tunnel`（Kong DP経由）**: mock-apiはKong DP内部からのみ直接到達
    （Service DNS）とし、Mac側はKong DPのLoadBalancer Serviceを`minikube tunnel`で公開し、
-   `KongRoute /mock-api`経由でアクセスする。デモの実際のクエリ経路（AIエージェント→Kong DP→
-   mock-api）をMacからも再現できる。
+   `KongRoute /mock-api`経由でアクセスする。**注意（2026-09-04訂正）**: これはmock-apiへの
+   直接到達性を確認するためのデバッグ用ルートであり、AIエージェントが実際に接続するデモ本体の
+   MCPエンドポイント（Konnect UI上でMCP Server定義後に確定する`/mcp/<name>`形式のルート）とは
+   別物。当初「デモの実際のクエリ経路を再現できる」と記載していたが不正確だったため訂正した
+   （詳細: `docs/design-brief.md`3章）。
 
 ## 決定
 mock-api本体は選択肢2（ClusterIP + port-forward、直接ヘルスチェック用）を採用しつつ、
