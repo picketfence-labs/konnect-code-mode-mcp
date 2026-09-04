@@ -1,5 +1,9 @@
 {
   "permissions": {
+    "additionalDirectories": [
+      "/Users/shinichi.hashitanikonghq.com/LOCAL_REPO/context-mesh",
+      "/Users/shinichi.hashitanikonghq.com/LOCAL_REPO/kong-operator"
+    ],
     "allow": [
       "WebFetch(domain:github.com)",
       "WebSearch",
@@ -19,6 +23,8 @@
       "Bash(minikube status *)",
       "Bash(kubectl config *)",
       "Bash(kubectl get *)",
+      "Bash(kubectl describe *)",
+      "Bash(kubectl logs *)",
       "Bash(minikube addons *)",
       "Bash(docker network *)",
       "Bash(kubectl -n metallb-system rollout status deploy/controller --timeout=120s)",
@@ -48,7 +54,33 @@
       "Bash(kubectl -n default get svc,pods -o wide)",
       "Bash(kubectl -n default get dataplane dataplane -o yaml)",
       "Bash(kubectl -n default get konnectapiauthconfigurations)",
-      "Bash(kubectl -n default get kongservice mock-api kongroute mock-api)"
+      "Bash(kubectl -n default get kongservice mock-api kongroute mock-api)",
+      "Bash(helm list *)",
+      "Bash(helm status *)",
+      "Bash(helm repo update)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh repo view:*)"
+    ],
+    "ask": [
+      "Edit(.claude/settings.json)",
+      "Write(.claude/settings.json)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(kubectl delete *)",
+      "Bash(helm install *)",
+      "Bash(helm upgrade *)",
+      "Bash(helm uninstall *)",
+      "Bash(minikube delete *)",
+      "Bash(minikube tunnel*)"
     ]
   }
 }

@@ -59,6 +59,44 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
   Konnect UI を直接操作しない。UI 側で必要な操作は手順として提示し、確認を仰ぐこと。
 - ローカル（Minikube / OpenAPI spec / 生成コード / サンプル API）側はエージェントが実装可。
 - 外部サービスへの公開・不可逆操作は事前確認する。
+- 本リポジトリは Obsidian Vault 側の `01-Projects/2026-09_konnect-code-mode-mcp` Project
+  （ハーネス整備担当）と、本リポジトリで実装を進める開発セッションの両方が触る
+  **オーケストレーション型**。設計判断・進め方の背景は Vault 側 Project、
+  実装知見（ADR/troubleshooting-log）は本リポジトリ側に残す、という役割分担。
+
+## エスカレーション条件・完了報告フォーマット
+
+以下に該当する操作は、実行前に必ず確認を取る（Triage相当）:
+1. Konnect テナントへの不可逆・破壊的操作（Control Plane 削除、DataPlane の破壊的再作成等）
+2. 継続的にコストが発生する操作（新規 Konnect Control Plane の作成、DataPlane のスケールアップ等）
+3. Kong Operator の image tag 変更（現在バグ回避策で固定中。検証結果次第で本番相当の判断が変わる）
+4. 複数の妥当な選択肢がある設計判断（[docs/decisions/](docs/decisions/) に ADR を追加する前に、
+   選択肢・判断基準を提示して確認を取る）
+5. スコープ逸脱・機密情報の扱いに確信が持てない場合
+
+以下は確認不要で進めてよい（Draft相当。事後の通常 PR レビューは維持）:
+- 読み取り専用の調査・確認（`kubectl get/describe/logs`、`helm list/status`等）
+- 既に合意されたスコープ内の実装（設計方針の変更を伴わないもの）
+- ローカル Minikube 環境内に閉じた変更（`mock-api`のコード、K8sマニフェスト等）
+
+**完了報告フォーマット**（タスク完了時）:
+1. 何を実施したか（サマリ）
+2. どう検証したか（`kubectl`/`curl`の実行結果等、実際に確認した事実）
+3. 指示から逸脱した判断とその理由（あれば）
+4. 未解決・持ち越しの論点
+5. CLAUDE.md・権限設定・ドキュメント自体に感じた摩擦・改善提案（無ければ「特になし」）
+   → いずれも [docs/troubleshooting-log.md](docs/troubleshooting-log.md) か PR 本文に書く
+
+想定通りに動かなかったことは、その場で [docs/troubleshooting-log.md](docs/troubleshooting-log.md)
+に追記する（後からまとめて思い出さない）。複数の妥当な選択肢がある判断は
+[docs/decisions/](docs/decisions/) に ADR として記録する（決定前に選択肢・判断基準を埋める）。
+
+## ローカル参照ホワイトリスト
+
+`.claude/settings.json`の`permissions.additionalDirectories`で、以下の参照専用ローカルリポジトリ
+への読み取りアクセスを許可している（**編集しない**。upstream の一次情報源として参照するのみ）:
+- `~/LOCAL_REPO/context-mesh`（`kong-gateway/context-mesh`。Code Mode / oas-to-python の実装詳細）
+- `~/LOCAL_REPO/kong-operator`（Kong Operator 本体。`MCPServer`/`MCPServerDataPlane` CRD実装）
 
 ## 技術スタック / 主要コンポーネント
 
@@ -104,8 +142,13 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 | `mock-api/openapi.json` | OpenAPI 3.0.3 spec（`oas-to-python` 用 / Konnect 登録用） |
 | `mock-api/Dockerfile` | mock-api コンテナイメージ定義 |
 | `deploy/mock-api/` | mock-api の K8s マニフェスト（Namespace/Deployment/Service ClusterIP） |
+| `deploy/kong/` | mock-api を Kong DP 経由でも公開する KongService/KongRoute（`/mock-api`） |
+| `docs/design-brief.md` | 基本設計（現在＋将来の要件・アーキテクチャ・優先順位。本ファイルの上位情報源） |
+| `docs/decisions/` | ADR（判断ポイントの記録） |
+| `docs/troubleshooting-log.md` | 想定通りに動かなかったことの記録 |
 
-今後追加予定: Kong DP / Kong Operator マニフェスト、生成 FastMCP サーバー。
+今後追加予定: Kong Operator インストール手順の本リポジトリへの取り込み（`deploy/kong-operator/`）、
+生成 FastMCP サーバー、Chat UI、ログ基盤。
 
 ## 未確定事項（要確認）
 

@@ -119,12 +119,38 @@ flowchart TB
 
 ## 7. 関連する既存知見・参照先の棚卸し
 
-- (a) Area: Obsidian Vault `02-Areas/Konnect - Context Mesh`の「現在地」節
-  （Context Mesh概要・GA予定・アーキテクチャ）
-- (b) ローカル参照ホワイトリスト候補（Obsidian Vault `07-Sources`、変更禁止・参照専用）:
-  - `kong-gateway-context-mesh`（`~/LOCAL_REPO/context-mesh`）: コード生成器・ランタイム
-  - `kong-operator`（`~/LOCAL_REPO/kong-operator`）: Kubernetesオペレーター本体
-  - `kong-konnect-context-mesh`: Control Plane実装（ローカル参照なし、GitHub直接確認）
+### (a) Obsidian Vault Area「Konnect - Context Mesh」の現在地（2026-09-04時点の理解、転記）
+
+- Context Mesh（Code Mode MCP相当機能）の **GA予定: 2026年9〜10月**。Konnect UI上の名称は
+  「Context Mesh」（配下に「MCP Servers」「Sources」の2サブメニュー）
+- 概要: OpenAPI specを「Source」として複数登録 → `search`/`get-schema`/`execute`の3ツールのみを
+  MCPサーバーとして公開（CloudflareのCode Mode MCPと同一コンセプト）。実装基盤はOSSの
+  **FastMCP**ライブラリの`CodeMode` transform。Kong独自の付加価値は「OpenAPI spec →
+  実行可能なFastMCPサーバーコードを自動生成し、Kubernetes上にライフサイクル管理込みで
+  デプロイする」レイヤー（`oas-to-python`生成器 + Kong Operator）。Kong Data PlaneはKubernetes
+  のPodとして稼働しKong Operatorで管理。コード生成・実行のサンドボックスはData Planeと
+  同じクラスタ内で稼働
+- 前提プラットフォーム: Kong Konnect（Kong Gatewayのクラウド管理プレーン）
+- 関連するが別物: 「AI Gateway」（`AIGatewayMCPServer`）は独立した別製品ライン。Context Mesh
+  チームは一時、MCPサーバーPodをこれでACL制御付きにラップする構成を検討したが、
+  「MCPプロトコルでMCPサーバーと会話できない」ことを理由に不採用（Ingress Gateway構成を維持）
+- 継続観測ポイント: Kong Operator側のバグ（本Design Brief2章で扱っているimage tag固定の件、
+  2026-09-04時点でVault側にも記録済み）、`oas-to-python`（Go）と`mcp-server-code-gen`
+  （TypeScript/Nunjucks）でコード生成ロジックが二重実装になっている経緯・統合予定は未確認、
+  Visual Workflow Editor（`mcp-translator`）はOn Hold（本デモでは不使用）
+- （公開情報にはこの機能の十分な技術詳細が無いことを2026-08時点で確認済み。上記はインサイダー
+  情報＋一次リポジトリ調査に基づく）
+
+### (b) ローカル参照ホワイトリスト候補（Obsidian Vault `07-Sources`、変更禁止・参照専用）
+
+- `kong-gateway-context-mesh`（`~/LOCAL_REPO/context-mesh`）: コード生成器・ランタイム
+  （`oas-to-python`/Go、`init-container`/`mcp-server-runner`）。**本リポジトリの`.claude/settings.json`
+  の`additionalDirectories`で読み取りアクセス許可済み**
+- `kong-operator`（`~/LOCAL_REPO/kong-operator`）: Kubernetesオペレーター本体。`MCPServer`
+  （Konnectミラー）/`MCPServerDataPlane`（実体管理）の2 CRDに分離した実装。**同様に読み取り
+  アクセス許可済み**
+- `kong-konnect-context-mesh`: Control Plane実装（Node.js/TypeScript+PostgreSQL、NestJS）。
+  ローカルclone無し、必要時はGitHubへ直接アクセスして確認する
 
 ## 検証ログ
 - 2026-09-04: 初版作成。Obsidian Vault Projectでのヒアリングにより、社内SE手順書

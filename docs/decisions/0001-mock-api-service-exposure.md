@@ -1,0 +1,49 @@
+# 0001. mock-api の公開方式（Service type / Macからの到達方式）
+
+- **日付**: 2026-09-04（事後再構成。判断自体は2026-08〜09初頭の作業で下された）
+- **状態**: 決定（一部未検証）
+
+## コンテキスト
+mock-api（気温データAPI）をMinikube上にデプロイし、(a) クラスタ内のKong DPから、
+(b) 検証用にMacホストから、の両方で到達可能にする必要がある。macOS + docker driverでは
+ノードがDocker Desktop VM内で動くため、`192.168.49.0/24`のようなクラスタ内部アドレスに
+Macから直接ルーティングできない制約がある。
+
+## 検討した選択肢
+1. **LoadBalancer (MetalLB)**: `minikube addons enable metallb`でEXTERNAL-IPを払い出す。
+   実装当初はこれを採用したが、上記のdocker driver制約によりEXTERNAL-IPがMacから到達不可と
+   判明（ping・curlいずれも失敗）。クラスタ内からは到達可能なため無意味ではないが、
+   Mac側の検証には別手段が必要だった。
+2. **ClusterIP + `kubectl port-forward`**: mock-api単体の直接ヘルスチェック用。固定ポート
+   `8088`にport-forwardする。シンプルで確実に動くが、Kong DP経由の本番相当ルートは検証できない。
+3. **ClusterIP + `minikube tunnel`（Kong DP経由）**: mock-apiはKong DP内部からのみ直接到達
+   （Service DNS）とし、Mac側はKong DPのLoadBalancer Serviceを`minikube tunnel`で公開し、
+   `KongRoute /mock-api`経由でアクセスする。デモの実際のクエリ経路（AIエージェント→Kong DP→
+   mock-api）をMacからも再現できる。
+
+## 決定
+mock-api本体は選択肢2（ClusterIP + port-forward、直接ヘルスチェック用）を採用しつつ、
+本番相当のクエリ経路検証は選択肢3（`minikube tunnel` + KongRoute）を追加する方針とした。
+選択肢1（MetalLB）は撤去した。
+
+## 判断基準・根拠
+- MetalLBはdocker driver環境のMacからは原理的に到達不可なため、Mac側検証という目的に対しては
+  無意味（クラスタ内到達性はClusterIPでも変わらず確保できる）
+- mock-api単体の素早いヘルスチェックにはport-forwardが最も単純で確実
+- デモの実際の経路（Kong DP経由）を検証するには、Kong DP自体をMacから到達可能にする必要があり、
+  そのための標準的な手段が`minikube tunnel`（MetalLBとは別のminikube機能）
+
+## 想定していたこと vs 実際どうだったか
+- 想定: `minikube tunnel`はLoadBalancer ServiceにMacから到達可能なexternal-ipを割り当てる
+- 実際: **未検証**。過去にMetalLBのEXTERNAL-IPが同じdocker driver環境で到達不可だった実績が
+  あるため、`minikube tunnel`が同様の制約を受けないか要確認（次回実機で検証する。
+  詳細: `docs/design-brief.md`2章「現在の要件」3番目の項目）
+
+## 影響・トレードオフ
+- mock-api単体検証（port-forward）とKong DP経由検証（tunnel）の2系統の到達方式が併存し、
+  `deploy/README.md`が若干複雑になった
+- `minikube tunnel`が機能しない場合、代替手段（例: Kong DPもport-forwardで公開する）の
+  再検討が必要になる
+
+## 関連する決定
+- [0003-repo-consolidation](0003-repo-consolidation.md)（本デモの実運用手順の一本化）
