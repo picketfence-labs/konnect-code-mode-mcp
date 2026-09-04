@@ -24,12 +24,13 @@ Kong Konnect Context Mesh を使い、AIエージェントのLLMトークン量�
    MCP Server のステータスが `healthy` のまま回帰無く動作することを検証済み。詳細:
    [ADR-0005](decisions/0005-kong-operator-image-tag-upgrade.md)、
    [troubleshooting-log.md](troubleshooting-log.md)。
-2. **リポジトリの一本化**: これまで `~/LOCAL_REPO/context-mesh`
+2. ~~**リポジトリの一本化**~~ → **完了（2026-09-04）**: これまで `~/LOCAL_REPO/context-mesh`
    （upstream `kong-gateway/context-mesh` の reference clone。Obsidian Vault
    `07-Sources/repos/kong-gateway-context-mesh` に登録済み・**変更禁止の参照専用**）を実運用の
-   起点にして Kong Operator インストール・Konnect UI 操作を行っていたが、以後は本リポジトリ
-   （`konnect-code-mode-mcp`）だけで再現できるようにする。具体的には、社内SE手順書の
-   Kong Operator インストール手順（Helm/CRD 定義）を `deploy/kong-operator/` 等に取り込む。
+   起点にして Kong Operator インストール・Konnect UI 操作を行っていたが、社内SE手順書の
+   Kong Operator インストール手順（Helm/CRD 定義）を [deploy/kong-operator/](../deploy/kong-operator/README.md)
+   に取り込み、本リポジトリ（`konnect-code-mode-mcp`）だけで再現できるようにした。詳細:
+   [ADR-0003](decisions/0003-repo-consolidation.md)。
 3. mock-api の Kong DP 経由到達（`deploy/kong/mock-api-kong.yaml` の KongService/KongRoute、
    `minikube tunnel`）を実機で検証する（前回セッション時点で未検証のまま）。
 4. **CLAUDE.md の「未確定事項（要確認）」を最新化する**（2026-09-04レビューで判明: 3件のうち
@@ -133,7 +134,11 @@ flowchart TB
 - **リポジトリの一本化（要件2）**: 本リポジトリのみを新規に clone した状態から、Kong Operator
   インストール〜Konnect UI操作〜デモクエリ実行までの一連の手順が、`~/LOCAL_REPO/context-mesh`
   への依存やそちらの手順書を別途参照する必要なしに完了できることを確認する
-  （2026-09-04レビューで追加。従来この項目には検証基準が無かった）
+  （2026-09-04レビューで追加。従来この項目には検証基準が無かった）。**実施状況（2026-09-04）**:
+  [deploy/kong-operator/README.md](../deploy/kong-operator/README.md)に手順・マニフェストを
+  取り込み、既存の稼働中リソース（Helm release / Konnect CRD群）の実際の設定値と一致させて記述した。
+  ただし「新規cloneからのゼロ構築」の実機再現は**未実施**（既存のKonnect Control
+  Plane/DataPlaneを壊して作り直すコストが高いため見送り。次にクラスタを作り直す機会に検証する）
 - **CLAUDE.mdの未確定事項解消（要件4）**: 本ファイル・CLAUDE.mdへの反映内容
   （Code Mode常時有効・現テナントでのMCP Composer稼働状況・feature gate投入コマンド）が、
   実際にKong Operatorをインストールした際の実機の挙動と一致することを確認する

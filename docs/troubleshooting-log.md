@@ -68,6 +68,20 @@
 - **対処・回避方法**: 該当エントリを削除（コミット`b5ca6bf`）
 - **コスト**: 軽微
 
+## 2026-09-04 社内SE手順書とKonnect UI経由で実際に稼働している値の不一致（DataPlane）
+- **何を期待していたか**: 社内SE手順書（`Kong Operator Context Mesh - SE's.md`）の
+  `DataPlane`定義（`kong/kong-gateway:3.14`、`replicas: 3`）をそのまま
+  `deploy/kong-operator/`へ移植すれば、現在稼働中の構成と一致する
+- **実際どうだったか**: `kubectl get dataplane dataplane -o yaml`で確認した実際の稼働値は
+  `kong/kong-gateway:3.15`、`replicas: 1`だった。手順書作成後にKonnect UI側の操作
+  （MCP Server作成時のControl Plane再設定等）で変更された可能性があるが、いつ・誰が
+  変えたかは追跡できなかった
+- **原因**: 不明（手順書とUI操作履歴の間に記録されないドリフトがあった）
+- **対処・回避方法**: 再現性を優先し、`deploy/kong-operator/`のマニフェストは手順書の値ではなく
+  **実機で確認した稼働中の値**を採用した。今後手順書側の値と食い違う変更をUIから行った場合、
+  本リポジトリのマニフェストへ書き戻すのを忘れないこと
+- **コスト**: 軽微（`kubectl get -o yaml`での確認のみ）
+
 ## 2026-09-04 デモと無関係なファイルの混入（current.yaml, kong-ns.json）
 - **何を期待していたか**: 作業ディレクトリのuntrackedファイルは、本デモに関連するもののみ
 - **実際どうだったか**: `current.yaml`（Kafka関連の別プロジェクトのdecK設定と推測）、

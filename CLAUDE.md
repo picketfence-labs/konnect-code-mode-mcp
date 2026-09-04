@@ -73,7 +73,8 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 以下に該当する操作は、実行前に必ず確認を取る（Triage相当）:
 1. Konnect テナントへの不可逆・破壊的操作（Control Plane 削除、DataPlane の破壊的再作成等）
 2. 継続的にコストが発生する操作（新規 Konnect Control Plane の作成、DataPlane のスケールアップ等）
-3. Kong Operator の image tag 変更（現在バグ回避策で固定中。検証結果次第で本番相当の判断が変わる）
+3. Kong Operator の image tag 変更（[ADR-0005](docs/decisions/0005-kong-operator-image-tag-upgrade.md)
+   で`20260904`へ更新済み。以後の変更も本番相当の判断が変わるため事前確認が必要）
 4. 複数の妥当な選択肢がある設計判断（[docs/decisions/](docs/decisions/) に ADR を追加する前に、
    選択肢・判断基準を提示して確認を取る）
 5. スコープ逸脱・機密情報の扱いに確信が持てない場合
@@ -154,12 +155,12 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 | `mock-api/Dockerfile` | mock-api コンテナイメージ定義 |
 | `deploy/mock-api/` | mock-api の K8s マニフェスト（Namespace/Deployment/Service ClusterIP） |
 | `deploy/kong/` | mock-api を Kong DP 経由でも公開する KongService/KongRoute（`/mock-api`） |
+| `deploy/kong-operator/` | Kong Operator インストール + Konnect Control Plane/DataPlane 接続手順（一本化済み） |
 | `docs/design-brief.md` | 基本設計（現在＋将来の要件・アーキテクチャ・優先順位。本ファイルの上位情報源） |
 | `docs/decisions/` | ADR（判断ポイントの記録） |
 | `docs/troubleshooting-log.md` | 想定通りに動かなかったことの記録 |
 
-今後追加予定: Kong Operator インストール手順の本リポジトリへの取り込み（`deploy/kong-operator/`）、
-生成 FastMCP サーバー、Chat UI、ログ基盤。
+今後追加予定: 生成 FastMCP サーバー、Chat UI、ログ基盤。
 
 ## 未確定事項（要確認）
 
@@ -172,21 +173,19 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 - ~~Minikube 上の Kong Operator への `mcp-server` feature gate 投入手順~~ → **解決**:
   `helm upgrade --install kong-operator kong/kong-operator --set env.FEATURE_GATES=mcp-server
   --set env.ENABLE_CONTROLLER_KONNECT=true`（社内SE手順書 `Kong Operator Context Mesh - SE's.md`
-  参照。項目2「リポジトリの一本化」でこの手順自体を本リポジトリへ取り込む予定）
+  参照。手順自体は[deploy/kong-operator/README.md](deploy/kong-operator/README.md)へ取り込み済み）
 
 残る未解決事項:
 - 現在 Konnect が実運用で使用している FastMCP のバージョン（3.3.1 or 3.4.x）は未確認
   （`oas-to-python` の `runtime-requirements.txt` は 3.3.1 にピン留めだが、本番 Control Plane
   〈`mcp-server-code-gen`〉が同じ生成経路・同じバージョンを使っているかは未確認）
-- **（最優先、2026-09-04追加）Kong Operator の image tag アップグレード検証**: 現在の実運用手順
-  （社内SE手順書、`~/LOCAL_REPO/context-mesh`起点。本リポジトリには未取り込み）は
-  `docker.io/kong/nightly-kong-operator:20260623` に固定しているが、これは当時「デプロイしても
-  Konnect 側で MCP Server の状態確認が取れない」という Operator 側バグの回避策。新しいタグで
-  再検証し、解消していれば置き換える。詳細: [docs/design-brief.md](docs/design-brief.md) 2章
-- **（2026-09-04追加）実運用手順の本リポジトリへの一本化**: 現時点でKong Operatorインストール・
-  Konnect UI操作の実運用は `~/LOCAL_REPO/context-mesh`（upstream `kong-gateway/context-mesh` の
-  reference clone、**変更禁止**）を起点に行っている。以後は本リポジトリだけで再現できるよう、
-  手順を `deploy/kong-operator/` 等に取り込む（詳細: [docs/design-brief.md](docs/design-brief.md)）
+以下2件は2026-09-04の開発セッションで**解決済み**:
+- ~~Kong Operator の image tag アップグレード検証~~ → **解決**: `20260904`へアップグレードし
+  ステータス確認不可バグの解消を確認（[ADR-0005](docs/decisions/0005-kong-operator-image-tag-upgrade.md)）
+- ~~実運用手順の本リポジトリへの一本化~~ → **解決**: Kong Operatorインストール・Konnect
+  Control Plane/DataPlane接続手順を[deploy/kong-operator/](deploy/kong-operator/README.md)へ
+  取り込み済み（`~/LOCAL_REPO/context-mesh`への依存を解消。詳細:
+  [ADR-0003](docs/decisions/0003-repo-consolidation.md)）
 
 ## 参照
 
