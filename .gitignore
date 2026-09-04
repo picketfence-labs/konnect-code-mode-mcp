@@ -14,3 +14,6 @@ chat-ui/.next/
 
 # OS / editor
 .DS_Store
+
+# Playwright MCP作業ログ
+.playwright-mcp/

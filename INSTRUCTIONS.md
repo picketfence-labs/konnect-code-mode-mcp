@@ -107,6 +107,35 @@ Code Mode MCP エンドポイントに MCP クライアント（Claude Code 等�
 
 ---
 
+## §3.5. Chat UI 経由でのアクセス
+
+MCP クライアントを自前で用意しなくても、ブラウザから同じデモクエリを試せる
+**Chat UI**（Next.js + Vercel AI SDK。技術背景は
+[ADR-0004](docs/decisions/0004-chat-ui-tech-stack.md)）を用意している。
+デプロイ手順は [deploy/README.md #Chat UI](deploy/README.md#chat-uinextjs--vercel-ai-sdk--mcp-client)。
+
+```bash
+# 別ターミナルで port-forward を常駐
+kubectl -n demo port-forward svc/chat-ui 3000:80
+```
+
+ブラウザで `http://localhost:3000` を開き、テキストボックスに
+「過去10年の3月の平均気温Top5を教えてください」と入力して送信する。
+
+回答が返るまでの間、画面上に `list_tools` → `get_schema` → `execute`（複数回）という
+Code Mode の内部ツール呼び出しが逐次表示され、それぞれの応答サイズ（文字数）も
+確認できる。最終的な回答として Top5 のみが整形されて表示される:
+
+![Chat UI クエリ実行結果](assets/images/chat-ui-query-result.png)
+
+チェックリスト:
+
+- [ ] `list_tools` → `get_schema` → `execute`（複数回）の順でツール呼び出しが表示される
+- [ ] 各 `execute` の応答サイズが数千文字程度に収まっている（12,000 件の生データではない）
+- [ ] 最終回答が Top5 のみ（§3 の期待結果と一致）
+
+---
+
 ## §4. トークン削減の確認
 
 Code Mode の効果（生データを LLM に渡さない）を数値で示す。
@@ -115,6 +144,13 @@ Code Mode の効果（生データを LLM に渡さない）を数値で示す�
 - 確認方法（例）:
   - [ ] MCP クライアント側のトークン計測 / ログで、レスポンスに含まれるデータ量を比較
   - [ ] Code Mode 有効時、LLM に渡るのは集計結果（5 件）のみであることを確認
+
+§3.5 の Chat UI 実行結果でも、各 `execute` 呼び出しの応答サイズ（数千文字程度、
+12,000 件の生データではない）が画面上で確認できる。さらに厳密な LLM トークン使用量
+（`usage.inputTokens` / `outputTokens`）は、chat-ui がリクエストごとに構造化ログとして
+stdout へ出力しており（`onEnd`、[ADR-0006](docs/decisions/0006-log-observability-stack.md)）、
+ログ基盤（[deploy/observability/README.md](deploy/observability/README.md)）経由の
+LogQL で実測値を確認できる。
 
 <!-- 実測値・スクショをここに追記 -->
 
@@ -129,6 +165,8 @@ Session not found / egress ガード 等）を参照。
 ## 参照
 
 - デプロイ手順: [deploy/README.md](deploy/README.md)
+- Chat UI 技術背景: [ADR-0004](docs/decisions/0004-chat-ui-tech-stack.md)
+- ログ基盤（トークン使用量の実測）: [deploy/observability/README.md](deploy/observability/README.md)
 - 調査メモ / アーキテクチャ: [CODE_MODE.md](CODE_MODE.md)
 - ローカル単体検証（通常不要）: [CODE_MODE_LOCAL_TEST.md](CODE_MODE_LOCAL_TEST.md)
 - プロジェクト指針 / 制約: [CLAUDE.md](CLAUDE.md)

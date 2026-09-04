@@ -17,6 +17,13 @@ MCP経由で大量データを扱うと、APIが返す生データがそのま�
 **ローカル Kubernetes (Minikube)**。詳細な上流リポジトリは
 [kong-gateway/context-mesh](https://github.com/kong-gateway/context-mesh)。
 
+デモ体験用に **Chat UI**（Next.js + Vercel AI SDK。[ADR-0004](docs/decisions/0004-chat-ui-tech-stack.md)）
+も用意しており、ブラウザから同じクエリを試せる。以下は実際にクエリを送信した際の画面例。
+list_tools / get_schema / execute（複数回）という Code Mode の内部ツール呼び出しと、
+各応答サイズ（数千文字程度、12,000 件の生データではない）が可視化されている:
+
+![Chat UI クエリ実行結果](assets/images/chat-ui-query-result.png)
+
 ## 全体像
 
 ```mermaid
@@ -41,7 +48,8 @@ flowchart LR
 | [CODE_MODE_LOCAL_TEST.md](CODE_MODE_LOCAL_TEST.md) | デモ設計 + ローカル単体検証手順（通常は実施不要） |
 | [CLAUDE.md](CLAUDE.md) | エージェント向けプロジェクト指針・要件・制約・規約 |
 | [mock-api/](mock-api/) | デモ用モック API（気温）+ テストデータ + OpenAPI spec |
-| [deploy/](deploy/) | Minikube デプロイ用マニフェスト（mock-api） |
+| [chat-ui/](chat-ui/) | デモ体験用 Chat UI（Next.js + Vercel AI SDK + MCP client） |
+| [deploy/](deploy/) | Minikube デプロイ用マニフェスト（mock-api / Chat UI / ログ基盤） |
 
 ## 構築・検証の流れ
 
