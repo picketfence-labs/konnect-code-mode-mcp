@@ -46,7 +46,19 @@ export async function POST(req: Request) {
       tools,
       // search→get_schema→execute の複数ステップを跨いで最終テキスト回答に到達させる
       stopWhen: stepCountIs(10),
-      onFinish: async () => {
+      onEnd: async (event) => {
+        // AI/MCP評価用の構造化ログ（Promtailがstdoutを収集しLokiへ集約する。ADR-0006参照）
+        console.log(
+          JSON.stringify({
+            event: 'chat_completed',
+            timestamp: new Date().toISOString(),
+            usage: event.usage,
+            stepCount: event.steps.length,
+            toolCallCount: event.toolCalls.length,
+            toolCalls: event.toolCalls.map((call) => call.toolName),
+            finishReason: event.finishReason,
+          })
+        )
         await mcpClient.close()
       },
     })

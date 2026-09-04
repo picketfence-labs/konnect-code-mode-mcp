@@ -120,3 +120,20 @@
   MCP_SERVER_URL確認手順）を`-l app=dataplane,gateway-operator.konghq.com/dataplane-service-type=ingress`
   に修正
 - **コスト**: 軽微（`kubectl get svc -o wide`で全件確認して気づいた）
+
+## 2026-09-04 MCP Server実体（app.py）はこのリポジトリから変更できない（ログ基盤設計の前提修正）
+- **何を期待していたか**: ログ基盤（要件6）で「AI/MCP評価特化型」を実現するにあたり、
+  MCP Server側にもtool呼び出し回数・レスポンスペイロードサイズを構造化ログとして
+  出力する計装を追加できる想定だった
+- **実際どうだったか**: MCP Serverの実体（`app.py`）はKonnect Control Planeが
+  `oas-to-python`で生成し、Podの`init-container`が起動時に`/code`エンドポイントから
+  取得する構成（[CODE_MODE.md](../CODE_MODE.md)参照）。**このリポジトリのコードとして
+  存在せず、デプロイのたびにControl Planeから再取得される**ため、計装のための改修を
+  このリポジトリ側から加える手段が無いと判明
+- **原因**: ログ基盤の設計検討を始めた時点で、MCP Server側のコード管理主体
+  （Control Plane生成 vs リポジトリ管理）を再確認していなかった
+- **対処・回避方法**: 計装は自分たちで書いているコード（chat-uiの`onEnd`）に限定し、
+  MCP Server側は追加計装なしで既存の非構造化ログ（Code Mode生成コード・`call_tool`結果を
+  含む、実機確認済みで情報量は十分）をそのままLokiに収集する方針に転換。詳細:
+  [ADR-0006](decisions/0006-log-observability-stack.md)
+- **コスト**: 軽微（アーキテクチャドキュメントの再確認のみ。実装前の判明のため手戻りは無し）
