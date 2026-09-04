@@ -95,7 +95,7 @@ kubectl apply -f deploy/kong/mock-api-kong.yaml
 minikube tunnel
 
 # Kong DP の LoadBalancer external-ip を確認
-kubectl get svc -n default -l gateway-operator.konghq.com/dataplane-name -o wide
+kubectl get svc -n default -l app=dataplane,gateway-operator.konghq.com/dataplane-service-type=ingress -o wide
 ```
 
 ⚠️ `minikube tunnel` は対話的な `sudo` パスワード入力を要求するため、非対話シェル
@@ -128,4 +128,67 @@ LoadBalancer external-ip（`127.0.0.1`）が Mac から到達可能であるこ�
 ```bash
 kubectl delete -f deploy/mock-api/mock-api.yaml
 # port-forward は Ctrl-C で停止
+```
+
+## Chat UI（Next.js + Vercel AI SDK + MCP client）
+
+デモ本体のAIエージェント役をブラウザから使えるようにするChat UI。mock-apiとは異なり
+MCPサーバー（Kong DP経由）へは**クラスタ内から内部Service DNSで直接到達**するため
+（`minikube tunnel`は不要）、Mac側はUI自体の閲覧用にport-forwardするだけでよい。
+技術スタックの背景は[ADR-0004](../docs/decisions/0004-chat-ui-tech-stack.md)参照。
+
+### 1. Kong DP の内部Service名を確認し、MCP_SERVER_URLを埋める
+
+```bash
+kubectl get svc -n default -l app=dataplane,gateway-operator.konghq.com/dataplane-service-type=ingress -o wide
+```
+
+上記で得られたService名（例: `dataplane-ingress-dataplane-9zrnp`）を使い、
+`deploy/chat-ui/chat-ui.yaml`の`MCP_SERVER_URL`を次の形式に書き換える:
+
+```
+http://<service名>.default.svc.cluster.local/mcp/world-monthly-temperature
+```
+
+### 2. Chat UI イメージを minikube 内にビルド
+
+```bash
+eval $(minikube docker-env)
+docker build -t chat-ui:0.1.0 chat-ui/
+eval $(minikube docker-env -u)
+```
+
+### 3. Gemini APIキーを Secret として登録
+
+**キー値をClaude Codeとの対話には出さない**こと。利用者自身が`chat-ui/.env.local`
+（`.gitignore`済み）に`GEMINI_API_KEY=...`の1行を書いてから、ファイルパスだけを使って
+Secretを作成する:
+
+```bash
+kubectl create secret generic chat-ui-secrets \
+  --from-env-file=chat-ui/.env.local \
+  -n demo
+```
+
+### 4. デプロイ
+
+```bash
+kubectl apply -f deploy/chat-ui/chat-ui.yaml
+kubectl -n demo rollout status deploy/chat-ui
+```
+
+### 5. Mac から到達可能にする（別ターミナルで常駐）
+
+```bash
+kubectl -n demo port-forward svc/chat-ui 3000:80
+```
+
+ブラウザで `http://localhost:3000` を開き、「過去10年の3月の平均気温Top5を教えてください」
+等を送信して動作確認する。
+
+### 片付け
+
+```bash
+kubectl delete -f deploy/chat-ui/chat-ui.yaml
+kubectl -n demo delete secret chat-ui-secrets
 ```

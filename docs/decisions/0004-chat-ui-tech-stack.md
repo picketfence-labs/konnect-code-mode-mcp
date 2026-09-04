@@ -43,13 +43,35 @@ client）を採用する。
   留める
 
 ## 想定していたこと vs 実際どうだったか
-（未実施。Chat UI実装後にこのセクションを更新する）
+- 想定: LLMプロバイダはkong-azure-obo-demo同様OpenAI（`@ai-sdk/openai`）
+- 実際（2026-09-04実装時）: 利用者の指示でGemini（`@ai-sdk/google`）に変更。APIキー命名は
+  Google系の別参考実装`kong-secure-rag`の`.env.example`規約（`GEMINI_API_KEY`/`GEMINI_MODEL`）
+  に合わせた。キーはコードに含めず、ローカルは`.env.local`、Minikube上はK8s Secret
+  （`chat-ui-secrets`、`envFrom.secretRef`）で注入する構成にした
+- 想定: デプロイ形態は未定（ローカル`next dev`のみか、コンテナ化かは実装時に判断としていた）
+- 実際: 利用者の指示でMinikube上にコンテナ化してデプロイする方針に決定。`mock-api`と同じ
+  パターン（`eval $(minikube docker-env)` + `docker build` + `deploy/chat-ui/chat-ui.yaml`）
+  を採用。Chat UIはPodとしてクラスタ内で稼働するため、**`minikube tunnel`に依存せず
+  Kong DPの内部Service DNS**（`dataplane-ingress-dataplane-*.default.svc.cluster.local`）
+  で直接MCPサーバーへ到達させた（Mac側のブラウザアクセスのみ`kubectl port-forward`）。
+  この構成で実機（`kubectl apply`後のPod）から実際に「過去10年の3月の平均気温Top5」等の
+  クエリを送信し、Code Mode経由（`search`→`get_schema`→`execute`）で正しい集計結果が
+  返ることを確認した
+- 想定外の追加発見: `@ai-sdk/mcp`経由のツールはUIMessageの`type: 'dynamic-tool'`
+  （静的ツールの`'tool-<name>'`とは別の型）でクライアントに届く。`ai`v7の`streamText`は
+  既定で1ステップしかツール呼び出しを継続しないため、`stopWhen: stepCountIs(10)`が
+  必須だった（無いと最初のツール呼び出し結果だけでストリームが終わり、最終テキスト回答が
+  生成されない）
 
 ## 影響・トレードオフ
 - Next.js/Vercel AI SDKという比較的重量級な技術選択になる（`kong-secure-rag`のVite+Reactより
   セットアップ・依存関係が多い）。ただしMCP接続が本デモの核心機能である以上、必要なコスト
-- パッケージバージョンは`kong-azure-obo-demo`時点（`ai`v7.0.87等）に追随するか、実装時点の
-  最新版を使うかは実装時に判断する（Vercel AI SDKは破壊的変更が比較的頻繁な点に留意）
+- パッケージバージョンは実装時点（2026-09-04）のnpm最新版で揃えた:
+  `ai@7.0.92` / `@ai-sdk/react@4.0.95` / `@ai-sdk/google@4.0.63` / `@ai-sdk/mcp@2.0.44`
+  （いずれも`@ai-sdk/provider@4.0.10`・`@ai-sdk/provider-utils@5.0.36`に揃っており相互互換）。
+  `next@16.3.4` + `react@19.2.8`
+- LLMプロバイダがGemini固定になったため、OpenAI等へ切り替える場合は`route.ts`の
+  モデル生成部分（`@ai-sdk/google`の`createGoogleGenerativeAI`呼び出し）を差し替える必要がある
 
 ## 関連する決定
 - [0003-repo-consolidation](0003-repo-consolidation.md)

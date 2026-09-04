@@ -5,5 +5,12 @@ __pycache__/
 venv/
 *.egg-info/
 
+# Node / Next.js (chat-ui)
+node_modules/
+chat-ui/.next/
+.env
+.env.local
+.env*.local
+
 # OS / editor
 .DS_Store

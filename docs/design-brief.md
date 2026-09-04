@@ -44,15 +44,18 @@ Kong Konnect Context Mesh を使い、AIエージェントのLLMトークン量�
 
 ### 将来（今回はやらないが、優先順位2番目以降として控える）
 
-5. **Chat UI 構築**: 現状は Claude Code CLI の `claude mcp add` 経由でエージェントを接続し、
-   CLI 上でプロンプト（例:「8月の平均気温が最も低い都市を10挙げてください」）を打っているだけで、
-   一般向けに見せられる Chat UI が無い。将来的に構築する。技術スタックは
-   [ADR-0004](decisions/0004-chat-ui-tech-stack.md) で決定済み（Next.js + Vercel AI SDK +
-   `@ai-sdk/mcp`、`kong-azure-obo-demo/services/chat-ui/` のパターンを参考にする）。
+5. ~~**Chat UI 構築**~~ → **完了（2026-09-04）**: 現状は Claude Code CLI の `claude mcp add`
+   経由でエージェントを接続しCLI上でプロンプトを打っているだけで一般向けに見せられる
+   Chat UI が無かった問題を解消。技術スタックは[ADR-0004](decisions/0004-chat-ui-tech-stack.md)
+   で決定済み（Next.js + Vercel AI SDK + `@ai-sdk/mcp`）だったが、実装時に利用者の指示で
+   LLMプロバイダをGemini（`@ai-sdk/google`）に、デプロイ形態をMinikube上のコンテナ化に決定
+   （ADR-0004更新済み）。`chat-ui/`（Next.js App）と`deploy/chat-ui/chat-ui.yaml`を追加し、
+   実際にPodとしてデプロイした状態で「過去10年の3月の平均気温Top5」等のクエリを送信、
+   Code Mode経由（`search`→`get_schema`→`execute`）で正しい集計結果が返ることをブラウザ
+   （Playwright）で確認した。
    **Chat UI構築とは別に、利用者個人のClaude Code（CLI）からの継続的な接続は
    Obsidian Vaultセッション側が`--scope user`で設定する**（本リポジトリの開発セッションの
-   スコープ外。2026-09-04、利用者の判断）。MCP DPのエンドポイントが確定（現在の要件3番目、
-   `minikube tunnel`検証）してから設定する。
+   スコープ外。2026-09-04、利用者の判断）。
 6. **ログ基盤整備**: mock-api・MCP Server のログを、現状はコンテナログを直接見て確認している。
    Grafana/Loki、または AI/MCP 評価に向いたログ基盤で両者のログを集約・検証できる仕組みにする。
 7. Context Mesh の GA（2026年9〜10月予定）に伴う仕様変更への追随（継続的なメンテナンス）。
@@ -92,9 +95,12 @@ flowchart TB
   **検証済み、2026-09-04**）。
   **注意（2026-09-04レビューで訂正）**: (b)の`/mock-api`ルートは mock-api への直接アクセス用の
   デバッグ経路であり、**AIエージェントが実際に接続するデモ本体のMCPエンドポイントとは別物**。
-  実際の接続URLはKonnect UI上でMCP Server を定義した時点で `/mcp/<server名>` 形式
-  （社内SE手順書の `/mcp/flights-service` 等のパターンを参照）で確定するはずだが、
-  本デモではまだ確定していない（次回実機検証時に本ファイル・CLAUDE.mdへ追記する）
+  **確定済み（2026-09-04、Chat UI着手前の実機確認）**: 実際の接続URLは
+  `http://localhost/mcp/world-monthly-temperature`（Kong DP + `minikube tunnel`経由、
+  既存の`KongRoute mcpserver-test-30f18e2a`）。JSON-RPC `initialize`→`tools/list`で
+  `list_tools`/`search`/`get_schema`/`execute`の4ツールを確認し、`serverInfo.version`は
+  `3.3.1`（FastMCP）だった。追加のUpstream認証ヘッダーはMCPハンドシェイク自体には不要
+  （upstream APIキーはサンドボックス内コードが使う設定で別レイヤー）。
 - Konnect UI 上で mock-api の OpenAPI spec を「Source」として登録 → MCP Server
   （`search`/`get-schema`/`execute` の3ツール）が自動生成 → Code Mode（FastMCP `CodeMode`
   transform）でクエリごとに動的コード生成・サンドボックス実行
@@ -117,9 +123,12 @@ flowchart TB
 - Kong Operator（Helm chart `kong/kong-operator`）/ Kong Gateway 3.14（hybrid, `DataPlane` CRD）
 - FastMCP（Python, `CodeMode` transform）/ oas-to-python（Go, OpenAPI→FastMCPサーバー生成）
 - Konnect UI（MCP Server / Source登録、手動操作）
-- （将来、決定済み）Chat UI: Next.js (App Router) + React + Vercel AI SDK
-  （`ai`/`@ai-sdk/openai`/`@ai-sdk/react`/`@ai-sdk/mcp`）。`@ai-sdk/mcp`の`createMCPClient`で
-  MCPサーバーにStreamable HTTP接続。詳細・判断根拠は[ADR-0004](decisions/0004-chat-ui-tech-stack.md)
+- **Chat UI（完了、2026-09-04）**: Next.js 16 (App Router) + React 19 + Vercel AI SDK
+  （`ai@7.0.92`/`@ai-sdk/google@4.0.63`/`@ai-sdk/react@4.0.95`/`@ai-sdk/mcp@2.0.44`）。
+  `@ai-sdk/mcp`の`createMCPClient`でMCPサーバー（Kong DP内部Service DNS経由）にStreamable
+  HTTP接続。LLMプロバイダはGemini（`@ai-sdk/google`、利用者判断でOpenAIから変更）。
+  `chat-ui/`（アプリ本体）・`deploy/chat-ui/chat-ui.yaml`（K8sマニフェスト）。
+  詳細・判断根拠は[ADR-0004](decisions/0004-chat-ui-tech-stack.md)
 - （将来・未定）ログ基盤: Grafana/Loki等、技術選定は未定
 
 ## 5. 検証方法（テストケース）
@@ -225,3 +234,22 @@ flowchart TB
   Kong経由（`X-Kong-Upstream-Latency`ヘッダー確認）で到達可能と確認。MetalLBと異なり
   docker driver環境の制約を受けないことも判明。詳細:
   [ADR-0001](decisions/0001-mock-api-service-exposure.md)。
+- 2026-09-04（開発セッション、Chat UI着手前の確認）: `minikube tunnel`常駐中に既存の
+  MCP Server（`mcpserver-test-30f18e2a`、Konnect名`world-monthly-temperature`）へJSON-RPCで
+  直接ハンドシェイクし、3章の未確定事項2点を解消。(1) 実際の接続URLは
+  `http://localhost/mcp/world-monthly-temperature`（`/mcp/<server名>`形式、想定通り）。
+  (2) `serverInfo.version`が`3.3.1`だったため、CLAUDE.md「残る未解決事項」（本番FastMCP
+  バージョン3.3.1/3.4.x未確認）も解消（`oas-to-python`の`runtime-requirements.txt`ピン留めと
+  一致）。`tools/list`で`list_tools`/`search`/`get_schema`/`execute`の4ツールを確認。
+- 2026-09-04（開発セッション、要件5実施）: Chat UI（`chat-ui/`）を実装し、Minikube上に
+  コンテナ化してデプロイした。LLMプロバイダはADR-0004時点の想定（OpenAI）から利用者の
+  指示でGemini（`@ai-sdk/google`）に変更、APIキーはK8s Secret経由で注入。MCPサーバーへは
+  Kong DPの内部Service DNSで直接到達（`minikube tunnel`不要）。ローカル`next dev`と
+  Minikube上の実Pod両方で、実際に「過去10年の3月/8月の平均気温Top5」等のクエリを送信し、
+  Code Mode経由（`search`→`get_schema`→`execute`）で正しい集計結果（都市名・気温）が
+  返り、ツール呼び出しと応答サイズがUI上で可視化されることをPlaywrightで確認した。
+  実装中の発見: `@ai-sdk/mcp`のツールは`type: 'dynamic-tool'`として届くため通常の
+  `'tool-<name>'`と別処理が必要、`streamText`は`stopWhen: stepCountIs(N)`無しだと
+  最初のツール呼び出し1回で止まる、`deploy/README.md`のKong DP Service検索コマンドの
+  ラベルセレクタが実在しないものだった（修正済み）。詳細:
+  [ADR-0004](decisions/0004-chat-ui-tech-stack.md)、[troubleshooting-log.md](troubleshooting-log.md)。
