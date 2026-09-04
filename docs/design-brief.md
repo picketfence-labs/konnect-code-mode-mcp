@@ -35,7 +35,13 @@ Kong Konnect Context Mesh を使い、AIエージェントのLLMトークン量�
 
 5. **Chat UI 構築**: 現状は Claude Code CLI の `claude mcp add` 経由でエージェントを接続し、
    CLI 上でプロンプト（例:「8月の平均気温が最も低い都市を10挙げてください」）を打っているだけで、
-   一般向けに見せられる Chat UI が無い。将来的に構築する。
+   一般向けに見せられる Chat UI が無い。将来的に構築する。技術スタックは
+   [ADR-0004](decisions/0004-chat-ui-tech-stack.md) で決定済み（Next.js + Vercel AI SDK +
+   `@ai-sdk/mcp`、`kong-azure-obo-demo/services/chat-ui/` のパターンを参考にする）。
+   **Chat UI構築とは別に、利用者個人のClaude Code（CLI）からの継続的な接続は
+   Obsidian Vaultセッション側が`--scope user`で設定する**（本リポジトリの開発セッションの
+   スコープ外。2026-09-04、利用者の判断）。MCP DPのエンドポイントが確定（現在の要件3番目、
+   `minikube tunnel`検証）してから設定する。
 6. **ログ基盤整備**: mock-api・MCP Server のログを、現状はコンテナログを直接見て確認している。
    Grafana/Loki、または AI/MCP 評価に向いたログ基盤で両者のログを集約・検証できる仕組みにする。
 7. Context Mesh の GA（2026年9〜10月予定）に伴う仕様変更への追随（継続的なメンテナンス）。
@@ -91,7 +97,9 @@ flowchart TB
 - Kong Operator（Helm chart `kong/kong-operator`）/ Kong Gateway 3.14（hybrid, `DataPlane` CRD）
 - FastMCP（Python, `CodeMode` transform）/ oas-to-python（Go, OpenAPI→FastMCPサーバー生成）
 - Konnect UI（MCP Server / Source登録、手動操作）
-- （将来・未定）Chat UI: 技術選定は未定
+- （将来、決定済み）Chat UI: Next.js (App Router) + React + Vercel AI SDK
+  （`ai`/`@ai-sdk/openai`/`@ai-sdk/react`/`@ai-sdk/mcp`）。`@ai-sdk/mcp`の`createMCPClient`で
+  MCPサーバーにStreamable HTTP接続。詳細・判断根拠は[ADR-0004](decisions/0004-chat-ui-tech-stack.md)
 - （将来・未定）ログ基盤: Grafana/Loki等、技術選定は未定
 
 ## 5. 検証方法（テストケース）
@@ -113,9 +121,10 @@ flowchart TB
 
 - 本リポジトリに一本化された、再現可能なセットアップ手順（Kong Operatorインストール〜
   Konnect UI操作〜デモクエリ実行）
-- 本Design Brief（`docs/design-brief.md`）・ADR（`docs/decisions/`、未整備）・
-  troubleshooting-log（未整備）
-- （将来）Chat UI、ログ基盤
+- 本Design Brief（`docs/design-brief.md`）・ADR（`docs/decisions/`）・troubleshooting-log
+  （`docs/troubleshooting-log.md`。いずれも2026-09-04整備済み）
+- （将来）Chat UI（Next.js + Vercel AI SDK、[ADR-0004](decisions/0004-chat-ui-tech-stack.md)）、
+  ログ基盤
 
 ## 7. 関連する既存知見・参照先の棚卸し
 
@@ -157,3 +166,8 @@ flowchart TB
   （`~/LOCAL_REPO/context-mesh`を起点としたKong Operatorインストール・Konnect UI操作）の
   存在と、image tag固定がバグ回避策だったこと、Chat UI・ログ基盤が未整備であることが判明し、
   それを反映して作成。
+- 2026-09-04（続き）: Chat UIの技術スタックを、利用者の指示（`kong-secure-rag`・
+  `kong-azure-obo-demo`を参考にする、特に好みは無い）に基づき決定
+  （[ADR-0004](decisions/0004-chat-ui-tech-stack.md)）。合わせて、利用者個人のClaude Codeから
+  デモへ継続的に接続する設定（`--scope user`）はObsidian Vaultセッション側の責務と明確化した
+  （本リポジトリの開発セッションのスコープ外）。
