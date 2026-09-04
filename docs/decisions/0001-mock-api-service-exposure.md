@@ -1,7 +1,7 @@
 # 0001. mock-api の公開方式（Service type / Macからの到達方式）
 
 - **日付**: 2026-09-04（事後再構成。判断自体は2026-08〜09初頭の作業で下された）
-- **状態**: 決定（一部未検証）
+- **状態**: 決定
 
 ## コンテキスト
 mock-api（気温データAPI）をMinikube上にデプロイし、(a) クラスタ内のKong DPから、
@@ -38,15 +38,19 @@ mock-api本体は選択肢2（ClusterIP + port-forward、直接ヘルスチェ�
 
 ## 想定していたこと vs 実際どうだったか
 - 想定: `minikube tunnel`はLoadBalancer ServiceにMacから到達可能なexternal-ipを割り当てる
-- 実際: **未検証**。過去にMetalLBのEXTERNAL-IPが同じdocker driver環境で到達不可だった実績が
-  あるため、`minikube tunnel`が同様の制約を受けないか要確認（次回実機で検証する。
-  詳細: `docs/design-brief.md`2章「現在の要件」3番目の項目）
+- 実際（2026-09-04検証）: 想定通り。`minikube tunnel`実行後、`dataplane-ingress-dataplane-*`
+  のEXTERNAL-IPが`127.0.0.1`で到達可能になり、`curl http://localhost/mock-api/health`が
+  Kong経由（`X-Kong-Upstream-Latency`ヘッダー確認）で200を返した。MetalLBと異なり、
+  docker driver環境の制約を受けなかった
+- 追加で判明した点: `minikube tunnel`は80/443番ポートのバインドに対話的な`sudo`パスワード
+  入力を要求するため、エージェントの非対話シェル（バックグラウンド実行）からは起動を
+  完了できない。利用者本人がターミナルで直接実行する必要がある（`deploy/README.md`に注記済み）
 
 ## 影響・トレードオフ
 - mock-api単体検証（port-forward）とKong DP経由検証（tunnel）の2系統の到達方式が併存し、
   `deploy/README.md`が若干複雑になった
-- `minikube tunnel`が機能しない場合、代替手段（例: Kong DPもport-forwardで公開する）の
-  再検討が必要になる
+- `minikube tunnel`は対話的なsudo入力が前提のため、エージェント単独では完結できず、
+  利用者の手動実行（常駐）を要する運用上の制約がある
 
 ## 関連する決定
 - [0003-repo-consolidation](0003-repo-consolidation.md)（本デモの実運用手順の一本化）
