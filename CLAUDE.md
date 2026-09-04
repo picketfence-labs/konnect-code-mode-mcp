@@ -158,11 +158,12 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 | `deploy/kong-operator/` | Kong Operator インストール + Konnect Control Plane/DataPlane 接続手順（一本化済み） |
 | `chat-ui/` | Chat UI（Next.js + Vercel AI SDK + `@ai-sdk/mcp`。Gemini接続、ADR-0004） |
 | `deploy/chat-ui/` | Chat UI の K8s マニフェスト（Namespace demo/Deployment/Service ClusterIP） |
+| `deploy/observability/README.md` | ログ基盤（Grafana Loki + Promtail）デプロイ手順（ADR-0006） |
 | `docs/design-brief.md` | 基本設計（現在＋将来の要件・アーキテクチャ・優先順位。本ファイルの上位情報源） |
 | `docs/decisions/` | ADR（判断ポイントの記録） |
 | `docs/troubleshooting-log.md` | 想定通りに動かなかったことの記録 |
 
-今後追加予定: 生成 FastMCP サーバー、ログ基盤。
+今後追加予定: 生成 FastMCP サーバー。
 
 ## 未確定事項（要確認）
 

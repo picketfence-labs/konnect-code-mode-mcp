@@ -129,7 +129,12 @@ flowchart TB
   HTTP接続。LLMプロバイダはGemini（`@ai-sdk/google`、利用者判断でOpenAIから変更）。
   `chat-ui/`（アプリ本体）・`deploy/chat-ui/chat-ui.yaml`（K8sマニフェスト）。
   詳細・判断根拠は[ADR-0004](decisions/0004-chat-ui-tech-stack.md)
-- （将来・未定）ログ基盤: Grafana/Loki等、技術選定は未定
+- **ログ基盤（完了、2026-09-04）**: Grafana Loki + Promtail（`grafana/loki-stack` Helm chart）
+  を`observability` namespaceにデプロイ。chat-uiは`onEnd`でtoken使用量・tool呼び出し回数を
+  構造化JSONログとしてstdout出力し、MCP Server（`app.py`はControl Plane生成のためこの
+  リポジトリから変更不可）は既存の非構造化ログをそのまま収集する。詳細・技術選定の理由は
+  [ADR-0006](decisions/0006-log-observability-stack.md)、デプロイ手順は
+  [deploy/observability/README.md](../deploy/observability/README.md)
 
 ## 5. 検証方法（テストケース）
 
@@ -166,8 +171,8 @@ flowchart TB
   Konnect UI操作〜デモクエリ実行）
 - 本Design Brief（`docs/design-brief.md`）・ADR（`docs/decisions/`）・troubleshooting-log
   （`docs/troubleshooting-log.md`。いずれも2026-09-04整備済み）
-- （将来）Chat UI（Next.js + Vercel AI SDK、[ADR-0004](decisions/0004-chat-ui-tech-stack.md)）、
-  ログ基盤
+- Chat UI（Next.js + Vercel AI SDK、[ADR-0004](decisions/0004-chat-ui-tech-stack.md)）
+- ログ基盤（Grafana Loki + Promtail、[ADR-0006](decisions/0006-log-observability-stack.md)）
 
 ## 7. 関連する既存知見・参照先の棚卸し
 
@@ -253,3 +258,14 @@ flowchart TB
   最初のツール呼び出し1回で止まる、`deploy/README.md`のKong DP Service検索コマンドの
   ラベルセレクタが実在しないものだった（修正済み）。詳細:
   [ADR-0004](decisions/0004-chat-ui-tech-stack.md)、[troubleshooting-log.md](troubleshooting-log.md)。
+- 2026-09-04（開発セッション、要件6実施）: ログ基盤を整備。利用者との相談の結果、
+  「AI/MCP評価特化型」の方向性のうち、自己ホストコストの重いLangfuseや連携実績の薄い
+  Arize Phoenixではなく、「構造化ログ + Grafana Loki + Promtail」を採用（詳細・比較は
+  [ADR-0006](decisions/0006-log-observability-stack.md)）。調査の過程で、MCP Server実体
+  （`app.py`）はKonnect Control Planeが生成しPod起動時に取得するため**このリポジトリから
+  変更できない**という制約が判明し、計装は自分たちで書いているchat-ui側（`onEnd`での
+  token使用量・tool呼び出し回数の構造化JSONログ）に限定し、MCP Server側は既存の
+  非構造化ログ（Code Mode生成コード・`call_tool`結果）をそのまま収集する方針に転換した。
+  `grafana/loki-stack` Helm chartを`observability` namespaceにデプロイし、実際にchat-ui
+  経由でクエリを送信、Loki APIで構造化ログ・MCP Serverログ双方が収集されていることを確認
+  済み。デプロイ手順: [deploy/observability/README.md](../deploy/observability/README.md)。
