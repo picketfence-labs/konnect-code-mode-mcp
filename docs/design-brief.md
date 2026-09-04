@@ -14,12 +14,16 @@ Kong Konnect Context Mesh を使い、AIエージェントのLLMトークン量�
 
 ### 現在（今回のスコープで確実に必要なもの。優先順）
 
-1. **Kong Operator の image tag アップグレード検証（最優先）**: 社内SE手順書
-   （`kong-operator`チャートを`docker.io/kong/nightly-kong-operator:20260623`に固定する内容。
-   Vault側 `01-Projects/2026-09_konnect-code-mode-mcp/notes/Kong Operator Context Mesh - SE's.md`
-   参照）では、当時「デプロイしても Konnect 側で MCP Server の状態確認が取れない」という
-   Kong Operator 側のバグの回避策としてこのタグに固定していた。より新しいタグに置き換え、
-   Konnect UI 上で MCP Server のステータスが正しく `healthy` になることを検証する。
+1. ~~**Kong Operator の image tag アップグレード検証（最優先）**~~ → **完了（2026-09-04）**:
+   社内SE手順書（`kong-operator`チャートを`docker.io/kong/nightly-kong-operator:20260623`に
+   固定する内容。Vault側
+   `01-Projects/2026-09_konnect-code-mode-mcp/notes/Kong Operator Context Mesh - SE's.md`参照）
+   では、当時「デプロイしても Konnect 側で MCP Server の状態確認が取れない」という
+   Kong Operator 側のバグの回避策としてこのタグに固定していた。`docker.io/kong/nightly-kong-operator:20260904`
+   （Helm chart `kong-operator` `1.3.0`→`1.4.0`）へアップグレードし、Konnect UI 上で
+   MCP Server のステータスが `healthy` のまま回帰無く動作することを検証済み。詳細:
+   [ADR-0005](decisions/0005-kong-operator-image-tag-upgrade.md)、
+   [troubleshooting-log.md](troubleshooting-log.md)。
 2. **リポジトリの一本化**: これまで `~/LOCAL_REPO/context-mesh`
    （upstream `kong-gateway/context-mesh` の reference clone。Obsidian Vault
    `07-Sources/repos/kong-gateway-context-mesh` に登録済み・**変更禁止の参照専用**）を実運用の
@@ -98,9 +102,8 @@ flowchart TB
   （`~/LOCAL_REPO/context-mesh`から本リポジトリへ）
 - [0004](decisions/0004-chat-ui-tech-stack.md): Chat UIの技術スタック
   （Next.js + Vercel AI SDK + `@ai-sdk/mcp`）
-
-上記いずれも今回の最優先事項（Kong Operator image tagアップグレード検証）はまだADR化されて
-いない。検証完了後、結果に応じて新規ADRとして記録する。
+- [0005](decisions/0005-kong-operator-image-tag-upgrade.md): Kong Operatorのimage tag
+  アップグレード（`20260623`→`20260904`、バグ回避策の解消）
 
 ## 4. 技術スタック
 
@@ -197,3 +200,10 @@ flowchart TB
   実際の接続URLは未確定である旨を明記。(3) 要件2（リポジトリ一本化）・要件4（未確定事項解消）に
   検証基準が無かったため5章に追加。(4) 3章「既存の判断ポイント」の記述が
   「ADR未整備・追加予定」のまま古くなっていたため、実際のADR 0001〜0004へのリンクに置き換え。
+- 2026-09-04（開発セッション、要件1実施）: Kong Operatorのimage tagアップグレード検証を実施。
+  `~/LOCAL_REPO/kong-operator`のCHANGELOG/git history調査により、固定タグ`20260623`が
+  Konnect側ステータス確認不可バグの修正コミット（PR #4795、2026-07-07マージ）より前だったことを
+  特定。利用者の判断で最新nightly`20260904`（Helm chart`1.3.0`→`1.4.0`）へアップグレードし、
+  アップグレード前後ともKonnect UI上で"Healthy"表示・回帰無しを確認（利用者が実機確認）。
+  詳細: [ADR-0005](decisions/0005-kong-operator-image-tag-upgrade.md)、
+  [troubleshooting-log.md](troubleshooting-log.md)。
