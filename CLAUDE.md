@@ -2,6 +2,9 @@
 
 このリポジトリで作業する Claude / コーディングエージェント向けのプロジェクト指針。
 
+**基本設計（現在＋将来の要件・アーキテクチャ・優先順位）は [docs/design-brief.md](docs/design-brief.md) を参照。
+本ファイルより詳細な背景・判断根拠はそちらが上位情報源。**
+
 ## プロジェクト概要
 
 Kong Konnect の **Context Mesh**（<https://github.com/kong-gateway/context-mesh>）を使い、
@@ -109,6 +112,15 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 - Konnect UI で Code Mode を有効化する手段の有無（UI トグル or spec 指定）。→ Shinichi 確認。
 - 現テナントで MCP Composer / Context Mesh が利用可能か（Technical Preview 段階）。→ Shinichi 確認。
 - Minikube 上の Kong Operator への `mcp-server` feature gate 投入手順。
+- **（最優先、2026-09-04追加）Kong Operator の image tag アップグレード検証**: 現在の実運用手順
+  （社内SE手順書、`~/LOCAL_REPO/context-mesh`起点。本リポジトリには未取り込み）は
+  `docker.io/kong/nightly-kong-operator:20260623` に固定しているが、これは当時「デプロイしても
+  Konnect 側で MCP Server の状態確認が取れない」という Operator 側バグの回避策。新しいタグで
+  再検証し、解消していれば置き換える。詳細: [docs/design-brief.md](docs/design-brief.md) 2章
+- **（2026-09-04追加）実運用手順の本リポジトリへの一本化**: 現時点でKong Operatorインストール・
+  Konnect UI操作の実運用は `~/LOCAL_REPO/context-mesh`（upstream `kong-gateway/context-mesh` の
+  reference clone、**変更禁止**）を起点に行っている。以後は本リポジトリだけで再現できるよう、
+  手順を `deploy/kong-operator/` 等に取り込む（詳細: [docs/design-brief.md](docs/design-brief.md)）
 
 ## 参照
 
