@@ -7,7 +7,7 @@ Control Plane/DataPlane 接続手順は [deploy/kong-operator/README.md](kong-op
 mock-api（世界都市気温 API）を Minikube にデプロイする手順。
 Service は `ClusterIP`。クラスタ内（Kong DP など）は Service DNS で参照し、
 **mock-api 単体の直接ヘルスチェックは `kubectl port-forward`**（固定ポート `8088`）で行う。
-デモ本番のクエリ経路（Kong DP 経由）は、後述の **`minikube tunnel`**（未検証）で
+デモ本番のクエリ経路（Kong DP 経由）は、後述の **`minikube tunnel`**（2026-09-04 実機検証済み）で
 Mac から到達させる方針にした（`deploy/kong/mock-api-kong.yaml` の `KongRoute /mock-api` 参照）。
 
 ## ポート割当（固定）
@@ -15,7 +15,7 @@ Mac から到達させる方針にした（`deploy/kong/mock-api-kong.yaml` の 
 | サービス | クラスタ内 | Mac ローカル |
 |---|---|---|
 | mock-api（直接） | Service `demo/mock-api` :80（→ Pod :8000） / DNS `mock-api.demo.svc.cluster.local` | port-forward: **`localhost:8088`** ← 固定。mock-api単体の疎通確認用 |
-| Kong DP（proxy） | Service `dataplane-ingress-dataplane-*`（LoadBalancer、Kong Operator管理） | `minikube tunnel` 経由の LoadBalancer external-ip:80 → `http://localhost/mock-api`（KongRoute `strip_path`。**未検証**） |
+| Kong DP（proxy） | Service `dataplane-ingress-dataplane-*`（LoadBalancer、Kong Operator管理） | `minikube tunnel` 経由の LoadBalancer external-ip:80 → `http://localhost/mock-api`（KongRoute `strip_path`。**検証済み**） |
 
 ## 前提
 
@@ -80,7 +80,7 @@ curl http://localhost:8088/cities | head -c 300
 curl "http://localhost:8088/temperatures?city_id=1&month=3"
 ```
 
-### 5. Kong DP をMacから到達可能にする（`minikube tunnel`、未検証）
+### 5. Kong DP をMacから到達可能にする（`minikube tunnel`）
 
 デモ本番のクエリは mock-api に直接ではなく Kong DP → `KongRoute` 経由で通す想定。
 `minikube tunnel` は LoadBalancer Service に到達可能な external-ip を割り当てる
@@ -90,12 +90,17 @@ minikube 標準機能で、MetalLB（撤去済み）とは別の仕組み。
 # mock-api を Kong 経由で公開する KongService/KongRoute を適用
 kubectl apply -f deploy/kong/mock-api-kong.yaml
 
-# 別ターミナルで常駐（sudo を要求される場合あり。Ctrl-C で停止）
+# 別ターミナルで常駐（sudo パスワードを要求される。80/443 の特権ポートバインドのため。
+# Ctrl-C で停止）
 minikube tunnel
 
 # Kong DP の LoadBalancer external-ip を確認
 kubectl get svc -n default -l gateway-operator.konghq.com/dataplane-name -o wide
 ```
+
+⚠️ `minikube tunnel` は対話的な `sudo` パスワード入力を要求するため、非対話シェル
+（エージェントのバックグラウンド実行等）からは起動を完了できない。**利用者本人が
+ターミナルで直接実行する**こと。
 
 疎通確認（Mac から。パスは `KongRoute` の `paths: /mock-api` + `strip_path: true`）:
 
@@ -103,9 +108,9 @@ kubectl get svc -n default -l gateway-operator.konghq.com/dataplane-name -o wide
 curl http://localhost/mock-api/health
 ```
 
-**未検証**: `minikube tunnel` が docker driver 環境で実際に external-ip を Mac から
-到達可能にできるかは次回実機で確認する（過去に MetalLB の EXTERNAL-IP がこの環境では
-到達不可だった実績があるため、`minikube tunnel` も同様の制約を受けないか要確認）。
+**検証済み（2026-09-04）**: docker driver 環境でも `minikube tunnel` 経由で
+LoadBalancer external-ip（`127.0.0.1`）が Mac から到達可能であることを確認
+（MetalLB は同環境で到達不可だったが、`minikube tunnel` は制約を受けない）。
 
 ## 動作確認済みの状態
 
@@ -114,7 +119,9 @@ curl http://localhost/mock-api/health
   （`{"status":"ok","cities":100,"temperatures":12000}`）
 - クラスタ内から: `http://mock-api.demo.svc.cluster.local/health` で到達可能
   （Kong DP が使う経路。OpenAPI spec `servers[0]` に設定済み）
-- Kong DP 経由（`minikube tunnel` + `KongRoute /mock-api`）: **未検証**（上記手順は方針のみ。次回のデプロイ時に実機で確認する）
+- Kong DP 経由（`minikube tunnel` + `KongRoute /mock-api`）: **検証済み（2026-09-04）**。
+  `curl http://localhost/mock-api/health` → `200 OK`（`X-Kong-Upstream-Latency` ヘッダーで
+  Kong 経由であることも確認）。`/cities`・`/temperatures?city_id=1&month=3` も到達可能
 
 ## 片付け
 

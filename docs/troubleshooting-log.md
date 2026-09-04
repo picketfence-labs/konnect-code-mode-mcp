@@ -91,3 +91,18 @@
   ディレクトリに誤って残ったものと推測）
 - **対処・回避方法**: 削除（コミット`b5ca6bf`に含む前にrm）
 - **コスト**: 軽微
+
+## 2026-09-04 `minikube tunnel`がエージェントの非対話シェルから起動不可（sudo要求）
+- **何を期待していたか**: `minikube tunnel`をバックグラウンドで起動し、mock-apiのKong DP経由
+  到達性を自動検証できる
+- **実際どうだったか**: `dataplane-ingress-dataplane-*`（LoadBalancer）が80/443番ポートを
+  要求するため、`minikube tunnel`は起動時に対話的な`sudo`パスワード入力を要求する。
+  非対話バックグラウンドシェルからは入力できずプロセスが無限に待機状態になった
+  （パスワードなしsudoも不可）
+- **原因**: LoadBalancer Serviceが特権ポート（80/443）を使う構成のため、`minikube tunnel`が
+  内部で`sudo`を呼ぶ仕様
+- **対処・回避方法**: 待機中のプロセスをkillし、利用者本人にターミナルで直接
+  `minikube tunnel`を実行してもらい、常駐させた状態で疎通確認（`curl`）を行った。
+  起動後は`curl http://localhost/mock-api/health`等がKong経由（`X-Kong-Upstream-Latency`
+  ヘッダーで確認）で200を返すことを確認済み
+- **コスト**: 軽微（利用者への依頼1往復のみ）

@@ -31,8 +31,12 @@ Kong Konnect Context Mesh を使い、AIエージェントのLLMトークン量�
    Kong Operator インストール手順（Helm/CRD 定義）を [deploy/kong-operator/](../deploy/kong-operator/README.md)
    に取り込み、本リポジトリ（`konnect-code-mode-mcp`）だけで再現できるようにした。詳細:
    [ADR-0003](decisions/0003-repo-consolidation.md)。
-3. mock-api の Kong DP 経由到達（`deploy/kong/mock-api-kong.yaml` の KongService/KongRoute、
-   `minikube tunnel`）を実機で検証する（前回セッション時点で未検証のまま）。
+3. ~~**mock-api の Kong DP 経由到達検証**~~ → **完了（2026-09-04）**: `deploy/kong/mock-api-kong.yaml`
+   の KongService/KongRoute は既に `PROGRAMMED: True` だったため、利用者に `minikube tunnel`
+   を手動起動してもらい（対話的な `sudo` 入力が必要なためエージェント単独では起動不可）、
+   `curl http://localhost/mock-api/health`・`/cities`・`/temperatures` がいずれも Kong 経由
+   （`X-Kong-Upstream-Latency` ヘッダーで確認）で到達可能であることを確認した。詳細:
+   [ADR-0001](decisions/0001-mock-api-service-exposure.md)。
 4. **CLAUDE.md の「未確定事項（要確認）」を最新化する**（2026-09-04レビューで判明: 3件のうち
    2件は Obsidian Vault 側の既存知見で、1件は今回発見した社内SE手順書で、いずれも**既に
    解決済み**。新規調査は不要で、CLAUDE.md へ解決内容を書き戻すだけで完了する。実施済み
@@ -84,7 +88,8 @@ flowchart TB
   K8s DataPlane（`kong/kong-gateway:3.14`、replicas 3）
 - mock-api（気温データ、FastAPI、ClusterIP）は、(a) クラスタ内から Service DNS で直接到達可能
   （MCP Server Pod が使う経路）、(b) `KongService`/`KongRoute`（`/mock-api`、strip_path）で
-  Kong DP 経由でも公開している（Mac からの直接到達性確認用、`minikube tunnel`必要・**未検証**）。
+  Kong DP 経由でも公開している（Mac からの直接到達性確認用、`minikube tunnel`必要・
+  **検証済み、2026-09-04**）。
   **注意（2026-09-04レビューで訂正）**: (b)の`/mock-api`ルートは mock-api への直接アクセス用の
   デバッグ経路であり、**AIエージェントが実際に接続するデモ本体のMCPエンドポイントとは別物**。
   実際の接続URLはKonnect UI上でMCP Server を定義した時点で `/mcp/<server名>` 形式
@@ -123,7 +128,9 @@ flowchart TB
   `KonnectGatewayControlPlane`/`DataPlane` の Ready 確認 → Konnect UI 上で MCP Server の
   status が `healthy` になることを確認（旧タグでは確認できなかった問題が解消されているか）
 - **mock-api の Kong DP 到達**: `minikube tunnel` 起動 → `curl http://localhost/mock-api/health`
-  が 200 を返すことを確認
+  が 200 を返すことを確認。**実施済み（2026-09-04）**: 利用者が `minikube tunnel` を手動起動
+  （対話的sudo入力が必要なためエージェント単独では起動不可）、`health`/`cities`/`temperatures`
+  いずれもKong経由で到達可能と確認。詳細: [ADR-0001](decisions/0001-mock-api-service-exposure.md)
 - **デモ本体**: Konnect UI 経由で MCP Server 定義 → AIエージェントから
   「過去10年の3月の平均気温Top5」等のクエリを実行 → レスポンスが集計後の少数件のみであること
   （生の12,000件がLLMコンテキストに流れないこと）を確認
@@ -212,3 +219,9 @@ flowchart TB
   アップグレード前後ともKonnect UI上で"Healthy"表示・回帰無しを確認（利用者が実機確認）。
   詳細: [ADR-0005](decisions/0005-kong-operator-image-tag-upgrade.md)、
   [troubleshooting-log.md](troubleshooting-log.md)。
+- 2026-09-04（開発セッション、要件3実施）: mock-apiのKong DP経由到達を実機検証。
+  `minikube tunnel`は対話的な`sudo`パスワード入力を要求するためエージェント単独では
+  起動できず、利用者に手動起動を依頼。起動後`curl`で`health`/`cities`/`temperatures`いずれも
+  Kong経由（`X-Kong-Upstream-Latency`ヘッダー確認）で到達可能と確認。MetalLBと異なり
+  docker driver環境の制約を受けないことも判明。詳細:
+  [ADR-0001](decisions/0001-mock-api-service-exposure.md)。
