@@ -91,6 +91,13 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 に追記する（後からまとめて思い出さない）。複数の妥当な選択肢がある判断は
 [docs/decisions/](docs/decisions/) に ADR として記録する（決定前に選択肢・判断基準を埋める）。
 
+## ブランチ・PRワークフロー（2026-09-04導入。`main`はbranch protection有効）
+
+`main`への直接pushは不可（`enforce_admins: true`、PR必須、レビュー必須数0）。
+`git checkout -b <branch>` → 実装・検証 → `docs/troubleshooting-log.md`に都度追記 →
+`git push -u origin <branch>` → `gh pr create` → （動作確認後）`gh pr merge --squash --delete-branch`
+→ `git checkout main && git pull`。PR descriptionには何を・なぜ・どう検証したかを書く。
+
 ## ローカル参照ホワイトリスト
 
 `.claude/settings.json`の`permissions.additionalDirectories`で、以下の参照専用ローカルリポジトリ
