@@ -1,0 +1,42 @@
+# mock-api を Kong 経由でクラスタ外に公開する Service / Route 定義。
+#
+# Kong Operator が管理する KongService / KongRoute CRD を使い、Konnect Control Plane
+# `test`（既存 MCP Server と同じ CP）に同期する。トラフィックは同 CP に接続された
+# DataPlane（default/dataplane、proxy Service: dataplane-ingress-dataplane-*）が捌く。
+#
+# ルーティング: Kong proxy への `/mock-api/*` を strip_path で `/*` に変換し、
+# 上流 mock-api.demo.svc.cluster.local:80 に転送する。
+#   例) GET http://<kong-proxy>/mock-api/health -> mock-api /health
+#
+# 適用: kubectl apply -f deploy/kong/mock-api-kong.yaml
+apiVersion: configuration.konghq.com/v1alpha1
+kind: KongService
+metadata:
+  name: mock-api
+  namespace: default
+spec:
+  controlPlaneRef:
+    type: konnectNamespacedRef
+    konnectNamespacedRef:
+      name: test
+  name: mock-api
+  host: mock-api.demo.svc.cluster.local
+  port: 80
+  protocol: http
+---
+apiVersion: configuration.konghq.com/v1alpha1
+kind: KongRoute
+metadata:
+  name: mock-api
+  namespace: default
+spec:
+  name: mock-api
+  serviceRef:
+    type: namespacedRef
+    namespacedRef:
+      name: mock-api
+  paths:
+    - /mock-api
+  methods:
+    - GET
+  strip_path: true

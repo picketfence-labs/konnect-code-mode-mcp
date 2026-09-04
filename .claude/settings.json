@@ -41,7 +41,14 @@
       "Bash(sudo -n true)",
       "Bash(ping -c 1 -t 2 192.168.49.2)",
       "Bash(nohup minikube service mock-api -n demo --url)",
-      "Bash(echo \"started pid $!\")"
+      "Bash(echo \"started pid $!\")",
+      "Bash(kubectl -n default get kongservice mcpserver-test-30f18e2a -o yaml)",
+      "Bash(sed '/managedFields:/,/^  [a-z]/d')",
+      "Bash(kubectl -n default get kongroute mcpserver-test-30f18e2a -o yaml)",
+      "Bash(kubectl -n default get svc,pods -o wide)",
+      "Bash(kubectl -n default get dataplane dataplane -o yaml)",
+      "Bash(kubectl -n default get konnectapiauthconfigurations)",
+      "Bash(kubectl -n default get kongservice mock-api kongroute mock-api)"
     ]
   }
 }

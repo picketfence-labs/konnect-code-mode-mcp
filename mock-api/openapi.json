@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "World City Monthly Temperatures API",
+    "title": "天気 API",
     "description": "世界主要都市の月平均気温 (摂氏) を提供します。世界100都市、それぞれ10年分の気温データが取得可能です。気温データは都市毎にIDを指定して取得するので、対象都市のIDが分からない場合にはまず都市の一覧を取得してから、IDを特定した後に気温データを取得する必要があります。",
     "version": "2.0.0"
   },
@@ -11,8 +11,8 @@
       "description": "Kong DP（クラスタ内）から参照する Kubernetes Service DNS。Service demo/mock-api の port 80（→ targetPort 8000）に転送される。Konnect に登録する上流 URL はこれを用いる。"
     },
     {
-      "url": "http://localhost:8088",
-      "description": "ローカル検証用。kubectl -n demo port-forward svc/mock-api 8088:80 で転送したポート。"
+      "url": "http://localhost/mock-api",
+      "description": "ローカル検証用。minikube tunnel で公開した Kong DP の LoadBalancer 経由、KongRoute `/mock-api`（strip_path）で mock-api に到達する。手順: deploy/README.md「Kong DP をMacから到達可能にする」参照（未検証）。"
     }
   ],
   "paths": {

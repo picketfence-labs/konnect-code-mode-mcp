@@ -1,5 +1,6 @@
 # mock-api（世界都市気温 API）を Minikube にデプロイするマニフェスト。
-# Namespace / Deployment / Service(type: LoadBalancer) を定義する。
+# Namespace / Deployment / Service(type: ClusterIP) を定義する。
+# クラスタ内は Service DNS、Mac からは kubectl port-forward (localhost:8088) で到達。
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -57,7 +58,9 @@ metadata:
   labels:
     app: mock-api
 spec:
-  type: LoadBalancer
+  # クラスタ内は Service DNS (mock-api.demo.svc) で到達。
+  # Mac からは kubectl port-forward (localhost:8088) を使うため ClusterIP で十分。
+  type: ClusterIP
   selector:
     app: mock-api
   ports:

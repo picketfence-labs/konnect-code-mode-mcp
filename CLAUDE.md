@@ -88,17 +88,21 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 
 | パス | 内容 |
 |---|---|
-| `README.md` | リポジトリの趣旨・構成・全体手順 |
+| `README.md` | リポジトリの趣旨・構成・全体像 |
+| `INSTRUCTIONS.md` | デモ検証手順（デプロイ後の疎通・クエリ・Top5 / トークン削減の確認） |
+| `deploy/README.md` | Minikube デプロイ手順（mock-api） |
 | `CODE_MODE.md` | Context Mesh / Code Mode 調査メモ・アーキテクチャ・実装方針 |
-| `CODE_MODE_LOCAL_TEST.md` | デモ設計 + ローカル単体検証手順 |
+| `CODE_MODE_LOCAL_TEST.md` | デモ設計 + ローカル単体検証手順（通常は実施不要） |
 | `mock-api/` | デモ用モック API（気温）+ テストデータ + OpenAPI spec |
 | `mock-api/generate_data.py` | テストデータ生成器（決定論的、cities/temperatures を出力） |
 | `mock-api/data/cities.json` | 生成済み 100 都市 |
 | `mock-api/data/temperatures.json` | 生成済み 12,000 気温レコード |
 | `mock-api/server.py` | FastAPI モック API（`/cities`, `/cities/{id}`, `/temperatures`） |
-| `mock-api/openapi.json` | OpenAPI 3.0.3 spec（`oas-to-python` 用） |
+| `mock-api/openapi.json` | OpenAPI 3.0.3 spec（`oas-to-python` 用 / Konnect 登録用） |
+| `mock-api/Dockerfile` | mock-api コンテナイメージ定義 |
+| `deploy/mock-api/` | mock-api の K8s マニフェスト（Namespace/Deployment/Service ClusterIP） |
 
-今後追加予定: 生成 FastMCP サーバー、Minikube デプロイ用マニフェスト。
+今後追加予定: Kong DP / Kong Operator マニフェスト、生成 FastMCP サーバー。
 
 ## 未確定事項（要確認）
 
