@@ -269,3 +269,12 @@ flowchart TB
   `grafana/loki-stack` Helm chartを`observability` namespaceにデプロイし、実際にchat-ui
   経由でクエリを送信、Loki APIで構造化ログ・MCP Serverログ双方が収集されていることを確認
   済み。デプロイ手順: [deploy/observability/README.md](../deploy/observability/README.md)。
+- 2026-09-05（開発セッション、利用者からの指摘への対応）: chat-uiがmock-api・MCP Serverと
+  異なりport-forward頼みだった非対称を解消するため、Kong DP経由（`http://localhost/chat-ui`）
+  での公開に変更。ホストベース（`nip.io`等）とパスベース（`/chat-ui` + Next.js
+  `basePath`）を比較し、mock-api等と統一感のあるURL構造になるパスベースを利用者の指示で採用
+  （詳細: [ADR-0007](decisions/0007-chat-ui-kong-route-exposure.md)）。実装中、`basePath`
+  設定だけでは`useChat()`のAPI呼び出し先（`/api/chat`）とreadinessProbe/livenessProbe
+  （`/`）の2箇所が自動的にプレフィックスされないという想定外の挙動が判明し、両方を手動で
+  `/chat-ui`込みに修正（詳細: [troubleshooting-log.md](troubleshooting-log.md)）。
+  `http://localhost/chat-ui`へ実際にデモクエリを送信し、期待通りのTop5が返ることを確認済み。

@@ -1,6 +1,7 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
 import { useState } from 'react'
 
 function partSize(value: unknown): number {
@@ -12,7 +13,11 @@ function partSize(value: unknown): number {
 }
 
 export default function ChatPage() {
-  const { messages, sendMessage, status } = useChat()
+  // basePath（next.config.jsの'/chat-ui'）はnext/linkと違いfetch呼び出し先には
+  // 自動で付与されないため、APIパスを明示的に揃える
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({ api: '/chat-ui/api/chat' }),
+  })
   const [input, setInput] = useState('')
 
   const onSubmit = (e: React.FormEvent) => {

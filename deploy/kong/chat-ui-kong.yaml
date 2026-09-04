@@ -1,0 +1,43 @@
+# chat-ui を Kong 経由でクラスタ外に公開する Service / Route 定義。
+#
+# mock-api-kong.yaml と異なり、chat-ui（Next.js）は静的アセット（/_next/*）や
+# APIルート（/api/chat）など複数パスを持つため、strip_path は使わない。代わりに
+# next.config.js 側で basePath: '/chat-ui' を設定し、Next.js自身がこのプレフィックス
+# 込みでルーティングする前提（strip_pathすると basePath 付きのパスがアプリに
+# 届かなくなり404になる）。
+#
+# ルーティング: Kong proxy への `/chat-ui/*` をそのまま（パス変換なし）
+# 上流 chat-ui.demo.svc.cluster.local:80 に転送する。
+#   例) GET  http://<kong-proxy>/chat-ui         -> chat-ui の basePath ルート
+#       POST http://<kong-proxy>/chat-ui/api/chat -> chat-ui の Route Handler
+#
+# 適用: kubectl apply -f deploy/kong/chat-ui-kong.yaml
+apiVersion: configuration.konghq.com/v1alpha1
+kind: KongService
+metadata:
+  name: chat-ui
+  namespace: default
+spec:
+  controlPlaneRef:
+    type: konnectNamespacedRef
+    konnectNamespacedRef:
+      name: test
+  name: chat-ui
+  host: chat-ui.demo.svc.cluster.local
+  port: 80
+  protocol: http
+---
+apiVersion: configuration.konghq.com/v1alpha1
+kind: KongRoute
+metadata:
+  name: chat-ui
+  namespace: default
+spec:
+  name: chat-ui
+  serviceRef:
+    type: namespacedRef
+    namespacedRef:
+      name: chat-ui
+  paths:
+    - /chat-ui
+  strip_path: false

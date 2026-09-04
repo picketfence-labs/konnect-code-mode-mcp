@@ -16,7 +16,8 @@ Mac から到達させる方針にした（`deploy/kong/mock-api-kong.yaml` の 
 | サービス | クラスタ内 | Mac ローカル |
 |---|---|---|
 | mock-api（直接） | Service `demo/mock-api` :80（→ Pod :8000） / DNS `mock-api.demo.svc.cluster.local` | port-forward: **`localhost:8088`** ← 固定。mock-api単体の疎通確認用 |
-| Kong DP（proxy） | Service `dataplane-ingress-dataplane-*`（LoadBalancer、Kong Operator管理） | `minikube tunnel` 経由の LoadBalancer external-ip:80 → `http://localhost/mock-api`（KongRoute `strip_path`。**検証済み**） |
+| Kong DP（proxy） | Service `dataplane-ingress-dataplane-*`（LoadBalancer、Kong Operator管理） | `minikube tunnel` 経由の LoadBalancer external-ip:80 → `http://localhost/mock-api`（KongRoute `strip_path: true`。**検証済み**） |
+| chat-ui | Service `demo/chat-ui` :80（→ Pod :3000） | `minikube tunnel` 経由 → `http://localhost/chat-ui`（KongRoute `strip_path: false` + Next.js `basePath`。**検証済み、2026-09-05**。port-forward不要） |
 
 ## 前提
 
@@ -133,10 +134,22 @@ kubectl delete -f deploy/mock-api/mock-api.yaml
 
 ## Chat UI（Next.js + Vercel AI SDK + MCP client）
 
-デモ本体のAIエージェント役をブラウザから使えるようにするChat UI。mock-apiとは異なり
-MCPサーバー（Kong DP経由）へは**クラスタ内から内部Service DNSで直接到達**するため
-（`minikube tunnel`は不要）、Mac側はUI自体の閲覧用にport-forwardするだけでよい。
+デモ本体のAIエージェント役をブラウザから使えるようにするChat UI。MCPサーバー
+（Kong DP経由）へは**クラスタ内から内部Service DNSで直接到達**するため
+（`minikube tunnel`は不要）。Chat UI自体はmock-apiと同様、
+`KongService`/`KongRoute`（`deploy/kong/chat-ui-kong.yaml`）でKong DP経由に公開しており、
+`minikube tunnel`さえ動いていればMac側のport-forwardは不要（`http://localhost/chat-ui`）。
 技術スタックの背景は[ADR-0004](../docs/decisions/0004-chat-ui-tech-stack.md)参照。
+
+**Next.js `basePath: '/chat-ui'` について**: Chat UI（Next.js）は`/`ではなく
+`/_next/*`（静的アセット）や`/api/chat`（APIルート）など複数パスを持つため、
+mock-apiのような`strip_path: true`のパスプレフィックス変換とは相性が悪い
+（変換すると`/chat-ui/_next/...`のようなアプリ内部の絶対パスがKongに届かず404になる）。
+そこで`chat-ui/next.config.js`に`basePath: '/chat-ui'`を設定し、
+Next.jsアプリ自身がこのプレフィックス込みでルーティングする方式にした
+（`KongRoute`側は`strip_path: false`）。この値はビルド時にクライアントバンドルへ
+埋め込まれるため、変更する場合はイメージの再ビルドが必要（`chat-ui/app/page.tsx`の
+`useChat`に渡す`DefaultChatTransport`の`api`パスも合わせて変更すること）。
 
 ### 1. Kong DP の内部Service名を確認し、MCP_SERVER_URLを埋める
 
@@ -178,18 +191,22 @@ kubectl apply -f deploy/chat-ui/chat-ui.yaml
 kubectl -n demo rollout status deploy/chat-ui
 ```
 
-### 5. Mac から到達可能にする（別ターミナルで常駐）
+### 5. Kong DP経由でMacから到達可能にする
+
+mock-apiと同じ`minikube tunnel`（前提: 別ターミナルで常駐済み。§5「Kong DP を Mac から
+到達可能にする」参照）を使う。追加で必要なのはKong route定義の適用のみ:
 
 ```bash
-kubectl -n demo port-forward svc/chat-ui 3000:80
+kubectl apply -f deploy/kong/chat-ui-kong.yaml
 ```
 
-ブラウザで `http://localhost:3000` を開き、「過去10年の3月の平均気温Top5を教えてください」
-等を送信して動作確認する。
+ブラウザで `http://localhost/chat-ui` を開き、「過去10年の3月の平均気温Top5を教えてください」
+等を送信して動作確認する（**検証済み、2026-09-05**）。
 
 ### 片付け
 
 ```bash
 kubectl delete -f deploy/chat-ui/chat-ui.yaml
+kubectl delete -f deploy/kong/chat-ui-kong.yaml
 kubectl -n demo delete secret chat-ui-secrets
 ```

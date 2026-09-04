@@ -39,14 +39,16 @@ spec:
             - secretRef:
                 name: chat-ui-secrets
           readinessProbe:
+            # next.config.js の basePath: '/chat-ui' により、アプリは "/" を持たない
+            # （404になる）ため、プローブも "/chat-ui" を叩く
             httpGet:
-              path: /
+              path: /chat-ui
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /
+              path: /chat-ui
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 20
@@ -66,7 +68,9 @@ metadata:
   labels:
     app: chat-ui
 spec:
-  # Mac からは kubectl port-forward (localhost:3000) を使うため ClusterIP で十分
+  # Mac からは Kong DP + minikube tunnel 経由（http://localhost/chat-ui）で到達する
+  # ため ClusterIP で十分。Service自体はKong Serviceの上流先として使われる
+  # （deploy/kong/chat-ui-kong.yaml参照）
   type: ClusterIP
   selector:
     app: chat-ui
