@@ -1,0 +1,44 @@
+# Grafana（ログ基盤の閲覧UI）を Kong 経由でクラスタ外に公開する Service / Route 定義。
+#
+# chat-ui-kong.yaml と同じ理由（静的アセット・APIなど複数パスを持つアプリを
+# サブパスで公開する）で strip_path は使わない。代わりに Grafana 自体の
+# サブパス公開機能（server.root_url / server.serve_from_sub_path）を
+# deploy/observability/README.md の helm upgrade コマンドで有効化し、
+# Grafana自身がこのプレフィックス込みでルーティング・アセット参照する前提とする
+# （strip_pathすると /grafana/public/... 等の絶対パスがKongに届く前に失われ404になる。
+# 参考: https://grafana.com/tutorials/run-grafana-behind-a-proxy/ 、ADR-0007）。
+#
+# ルーティング: Kong proxy への `/grafana/*` をそのまま（パス変換なし）
+# 上流 loki-grafana.observability.svc.cluster.local:80 に転送する。
+#   例) GET http://<kong-proxy>/grafana -> Grafana ログイン画面
+#
+# 適用: kubectl apply -f deploy/kong/grafana-kong.yaml
+apiVersion: configuration.konghq.com/v1alpha1
+kind: KongService
+metadata:
+  name: grafana
+  namespace: default
+spec:
+  controlPlaneRef:
+    type: konnectNamespacedRef
+    konnectNamespacedRef:
+      name: test
+  name: grafana
+  host: loki-grafana.observability.svc.cluster.local
+  port: 80
+  protocol: http
+---
+apiVersion: configuration.konghq.com/v1alpha1
+kind: KongRoute
+metadata:
+  name: grafana
+  namespace: default
+spec:
+  name: grafana
+  serviceRef:
+    type: namespacedRef
+    namespacedRef:
+      name: grafana
+  paths:
+    - /grafana
+  strip_path: false
