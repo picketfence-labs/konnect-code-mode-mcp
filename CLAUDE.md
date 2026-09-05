@@ -154,7 +154,7 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 | `mock-api/openapi.json` | OpenAPI 3.0.3 spec（`oas-to-python` 用 / Konnect 登録用） |
 | `mock-api/Dockerfile` | mock-api コンテナイメージ定義 |
 | `deploy/mock-api/` | mock-api の K8s マニフェスト（Namespace/Deployment/Service ClusterIP） |
-| `deploy/kong/` | mock-api を Kong DP 経由でも公開する KongService/KongRoute（`/mock-api`） |
+| `deploy/kong/` | mock-api / chat-ui を Kong DP 経由でも公開する KongService/KongRoute（`/mock-api`・`/chat-ui`） |
 | `deploy/kong-operator/` | Kong Operator インストール + Konnect Control Plane/DataPlane 接続手順（一本化済み） |
 | `chat-ui/` | Chat UI（Next.js + Vercel AI SDK + `@ai-sdk/mcp`。Gemini接続、ADR-0004） |
 | `deploy/chat-ui/` | Chat UI の K8s マニフェスト（Namespace demo/Deployment/Service ClusterIP） |

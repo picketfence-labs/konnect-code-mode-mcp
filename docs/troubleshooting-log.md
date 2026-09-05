@@ -137,3 +137,24 @@
   含む、実機確認済みで情報量は十分）をそのままLokiに収集する方針に転換。詳細:
   [ADR-0006](decisions/0006-log-observability-stack.md)
 - **コスト**: 軽微（アーキテクチャドキュメントの再確認のみ。実装前の判明のため手戻りは無し）
+
+## 2026-09-05 Next.js `basePath`設定で見落としやすい2箇所（chat-uiのKong route化）
+- **何を期待していたか**: chat-uiをKong DP経由（`/chat-ui`パスプレフィックス）で公開する際、
+  `next.config.js`に`basePath: '/chat-ui'`を設定すれば、アプリ内の全リクエスト・
+  アセット参照が自動的にプレフィックス込みで解決されると想定していた
+- **実際どうだったか**: 2箇所で想定外の挙動があった。
+  1. `@ai-sdk/react`の`useChat()`がデフォルトで叩く`/api/chat`は、`next/link`と違い
+     `basePath`が自動付与されない（クライアント側の素の`fetch()`呼び出しのため）。
+     修正せずデプロイした場合、チャット送信がbasePath無しの`/api/chat`（404）を叩き失敗する
+  2. `basePath`設定後、アプリのルートは`/`ではなく`/chat-ui`になる（`/`は404を返す）。
+     そのため`deploy/chat-ui/chat-ui.yaml`の`readinessProbe`/`livenessProbe`
+     （`path: /`、コンテナポート3000に直接アクセス）がKong経由か否かに関わらず
+     常に失敗するようになる（`kubectl rollout status`がタイムアウトして気づいた）
+- **原因**: Next.js公式ドキュメント（`basePath.md`）に、`next/link`によるリンクのみ
+  自動プレフィックスされる旨は明記されているが、`fetch()`や外部からのヘルスチェック
+  パスまでは対象外という点は事前に見落としていた
+- **対処・回避方法**: (1) `useChat({ transport: new DefaultChatTransport({ api:
+  '/chat-ui/api/chat' }) })`でAPIパスを明示。(2) readinessProbe/livenessProbeの
+  `path`を`/chat-ui`に変更。いずれも`next.config.js`の`basePath`値と手動で
+  同期させる必要がある点をコード中にコメントで明記した
+- **コスト**: 軽微（`kubectl rollout status`のタイムアウトで(2)に気づくまで数分）
