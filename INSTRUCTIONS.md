@@ -102,9 +102,10 @@ mock-api・MCP サーバーの実ログを LogQL で検索することで、Code
 ことを直接確認できる。
 
 ```bash
-# 前提: Grafanaへアクセス（deploy/observability/README.md #2参照）
-kubectl -n observability port-forward svc/loki-grafana 3000:80
-# ブラウザで http://localhost:3000 → Explore → データソース Loki
+# 前提: mock-apiやChat UIと同じKong DP経由でGrafanaにアクセス
+# （minikube tunnel常駐 + deploy/kong/grafana-kong.yaml適用済みであること。
+#   手順・パスワード取得は deploy/observability/README.md 参照）
+# ブラウザで http://localhost/grafana → Explore → データソース Loki
 ```
 
 **mock-api が100回以上コールされているログ**（正規化APIのため `listCities` → 各都市の

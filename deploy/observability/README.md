@@ -39,6 +39,9 @@ flowchart LR
 
 - Minikube稼働中、`kubectl`がクラスタに接続済み
 - Helmリポジトリ`grafana`が登録済み（`helm repo add grafana https://grafana.github.io/helm-charts`）
+- mock-api・chat-uiと同じ方式（Kong DP + `minikube tunnel`）でGrafanaにアクセスするため、
+  別ターミナルで`minikube tunnel`を常駐させておく（手順は[deploy/README.md](../README.md)
+  「Kong DP をMacから到達可能にする」参照。既に起動済みなら再実行不要）
 
 ## 手順
 
@@ -48,6 +51,12 @@ flowchart LR
 `k8s-monitoring`chartを推奨しているが、本デモ規模では`loki-stack`で十分）を
 1リリースでまとめてデプロイする。
 
+Grafana単体はNext.jsのようなbasePath設定を持たないが、代わりに標準のリバースプロキシ
+配下運用機能（`server.root_url` / `server.serve_from_sub_path`）を持つため、これを
+`/grafana`向けに有効化しておく（考え方はchat-uiの`basePath`と同じ。参照:
+[ADR-0007](../../docs/decisions/0007-chat-ui-kong-route-exposure.md)、
+[Grafana公式: Run Grafana behind a reverse proxy](https://grafana.com/tutorials/run-grafana-behind-a-proxy/)）。
+
 ```bash
 helm repo add grafana https://grafana.github.io/helm-charts   # 未登録の場合のみ
 helm repo update
@@ -56,21 +65,36 @@ helm upgrade --install loki grafana/loki-stack \
   -n observability --create-namespace \
   --set grafana.enabled=true \
   --set promtail.enabled=true \
-  --set loki.persistence.enabled=false
+  --set loki.persistence.enabled=false \
+  --set grafana."grafana\.ini".server.root_url="%(protocol)s://%(domain)s/grafana/" \
+  --set grafana."grafana\.ini".server.serve_from_sub_path=true
 ```
 
 `loki.persistence.enabled=false`はデモ用の簡易構成（Pod再作成でログが消える）。
 永続化したい場合は`--set loki.persistence.enabled=true`と適切な`storageClassName`を指定する。
 
-### 2. Grafana へのアクセス
+### 2. Grafana を Kong DP 経由で公開する
+
+mock-api・chat-uiと同じ`KongService`/`KongRoute`パターン（strip_pathなし。
+上記の`serve_from_sub_path`とセットで機能する。詳細はファイル内コメント参照）で
+`/grafana`に公開する。
+
+```bash
+kubectl apply -f ../kong/grafana-kong.yaml
+```
+
+### 3. Grafana へのアクセス
 
 ```bash
 kubectl -n observability get secret loki-grafana \
   -o jsonpath='{.data.admin-password}' | base64 -d; echo
 
-kubectl -n observability port-forward svc/loki-grafana 3000:80
-# ブラウザで http://localhost:3000 （user: admin / 上記コマンドで取得したpassword）
+# ブラウザで http://localhost/grafana （user: admin / 上記コマンドで取得したpassword）
 ```
+
+**検証済み（2026-09-05）**: `curl http://localhost/grafana/login`・`/grafana/api/health`・
+`/grafana/public/build/*.{css,js}` がいずれもKong経由で200 OKになることを確認
+（`<base href="/grafana/" />`によりアセットも相対パスで正しく解決される）。
 
 Grafana起動時に`Loki`データソースが自動登録されている（chart既定）。
 「Explore」から下記のようなLogQLでログを横断検索できる。
@@ -83,7 +107,7 @@ Grafana起動時に`Loki`データソースが自動登録されている（char
 {namespace="default", container="mcp-server"} |= "CODE MODE"
 ```
 
-### 3. 動作確認（API経由、Grafana UIを開かずに確認する場合）
+### 4. 動作確認（API経由、Grafana UIを開かずに確認する場合）
 
 ```bash
 kubectl -n observability port-forward svc/loki 3100:3100 &
