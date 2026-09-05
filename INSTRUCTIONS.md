@@ -72,54 +72,18 @@ MCPの定義には、接続先のAPIの登録が必要です。
 
 ---
 
-## §3. デモクエリ実行（Top5 検証）
-
-Code Mode MCP エンドポイントに MCP クライアント（Claude Code 等）を接続し、
-以下のクエリを投げる。
-
-> **クエリ**: 「過去 10 年の 3 月の平均気温 Top5 を取得」
-
-期待される内部動作（サンドボックス内）:
-
-1. `listCities` で 100 都市の id を取得
-2. 各都市について `getTemperatures(city_id)` を呼び、3 月のレコードを抽出（~100 回呼び出し）
-3. 都市ごとに 10 年分（2016–2025）の平均を算出
-4. 平均の降順で **Top5 の 5 件だけ** を返す
-
-### 期待結果
-
-- 返却は **5 件のみ**（12,000 件の生データは LLM コンテキストに渡らない）
-- ローカルで確認済みの Top5（±小数誤差）:
-
-  | 順位 | 都市 | 国 |
-  |---|---|---|
-  | 1 | Jakarta | Indonesia |
-  | 2 | Singapore | Singapore |
-  | 3 | Khartoum | Sudan |
-  | 4 | Luanda | Angola |
-  | 5 | Chennai | India |
-
-チェックリスト:
-
-- [ ] 返却レコードが 5 件
-- [ ] 上位都市が期待値と一致
-- [ ] エラー無し（`max_tool_calls` / サンドボックス時間超過が出ない）
-
----
-
-## §3.5. Chat UI 経由でのアクセス
+## §3. Chat UIにおける検証
 
 MCP クライアントを自前で用意しなくても、ブラウザから同じデモクエリを試せる
 **Chat UI**（Next.js + Vercel AI SDK。技術背景は
 [ADR-0004](docs/decisions/0004-chat-ui-tech-stack.md)）を用意している。
-デプロイ手順は [deploy/README.md #Chat UI](deploy/README.md#chat-uinextjs--vercel-ai-sdk--mcp-client)。
+デプロイ手順・アクセス方法は [deploy/README.md #Chat UI](deploy/README.md#chat-uinextjs--vercel-ai-sdk--mcp-client)
+（Kong DP 経由、`minikube tunnel` 前提。詳細は[ADR-0007](docs/decisions/0007-chat-ui-kong-route-exposure.md)）。
 
-```bash
-# 別ターミナルで port-forward を常駐
-kubectl -n demo port-forward svc/chat-ui 3000:80
-```
+> 前提: 別ターミナルで `minikube tunnel` を常駐させ、`deploy/kong/chat-ui-kong.yaml`を
+> 適用済みであること（手順は[deploy/README.md](deploy/README.md#chat-uinextjs--vercel-ai-sdk--mcp-client)参照）。
 
-ブラウザで `http://localhost:3000` を開き、テキストボックスに
+ブラウザで `http://localhost/chat-ui` を開き、テキストボックスに
 「過去10年の3月の平均気温Top5を教えてください」と入力して送信する。
 
 回答が返るまでの間、画面上に `list_tools` → `get_schema` → `execute`（複数回）という
@@ -128,11 +92,62 @@ Code Mode の内部ツール呼び出しが逐次表示され、それぞれの�
 
 ![Chat UI クエリ実行結果](assets/images/chat-ui-query-result.png)
 
-チェックリスト:
+### 内部動作の確認方法（キャプチャ付き）
 
-- [ ] `list_tools` → `get_schema` → `execute`（複数回）の順でツール呼び出しが表示される
-- [ ] 各 `execute` の応答サイズが数千文字程度に収まっている（12,000 件の生データではない）
-- [ ] 最終回答が Top5 のみ（§3 の期待結果と一致）
+画面上の応答サイズだけでなく、ログ基盤（Grafana Loki + Promtail。
+[deploy/observability/README.md](deploy/observability/README.md)、
+[ADR-0006](docs/decisions/0006-log-observability-stack.md)）の Explore 画面で
+mock-api・MCP サーバーの実ログを LogQL で検索することで、Code Mode が
+「大量データの取得・加工をサンドボックス内で完結させ、結果だけを返している」
+ことを直接確認できる。
+
+```bash
+# 前提: Grafanaへアクセス（deploy/observability/README.md #2参照）
+kubectl -n observability port-forward svc/loki-grafana 3000:80
+# ブラウザで http://localhost:3000 → Explore → データソース Loki
+```
+
+**mock-api が100回以上コールされているログ**（正規化APIのため `listCities` → 各都市の
+`getTemperatures` をループする設計。詳細は[CLAUDE.md](CLAUDE.md)参照）。以下のLogQLで検索する:
+
+```logql
+{namespace="demo", app="mock-api"} |= "GET /temperatures"
+```
+
+1クエリあたり `Line limit: 1000 (302 returned)` のように、Top10クエリ2回分・Top5クエリ2回分の
+実行結果として300件超のヒットが確認できる（1クエリ ≒ 100件の `getTemperatures` 呼び出し）:
+
+![mock-apiの呼び出しログ（Grafana Explore）](assets/images/mock-api-100calls-log.png)
+
+**MCP サーバーが生成しているコードを出力しているログ**（`app.py` はKonnect Control Plane
+が生成するためこのリポジトリからは変更できない。詳細は
+[deploy/observability/README.md](deploy/observability/README.md)）。以下のLogQLで検索する:
+
+```logql
+{namespace="default", container="mcp-server"} |= "CODE MODE"
+```
+
+各ヒットは生成コードの先頭行のみのため、時刻を絞り込んで（`|=`フィルタを外し対象時刻の
+数十ms幅で検索）そのクエリの生成コード全体を「Oldest first」表示で確認する。
+実際に「年間の気温差が小さい都市Top10」クエリで生成された集計コードの例:
+
+![MCP Serverの生成コードログ（Grafana Explore）](assets/images/mcp-server-generated-code-log.png)
+
+### テストケース
+
+「過去10年の3月の平均気温Top5」以外にも、以下のクエリで正しく集計できることを確認済み
+（期待値は`mock-api/data/temperatures.json`から算出した実データの答え合わせ値）。
+
+| # | 入力プロンプト | 期待値 | 実行結果 |
+|---|---|---|---|
+| 1 | 過去10年の8月の平均気温が低い都市Top5を教えてください | Melbourne(5.64℃) / Santiago(6.28℃) / Auckland(6.37℃) / Cape Town(8.87℃) / Buenos Aires(9.58℃) | ![](assets/images/chat-ui-test1-aug-lowest5.png) |
+| 2 | 過去10年の2月の平均気温が高い都市Top10を教えてください | Jakarta(29.98℃) / Rio de Janeiro(29.42℃) / Luanda(28.26℃) / Singapore(27.76℃) / Dar es Salaam(27.66℃) / Buenos Aires(26.72℃) / Khartoum(26.66℃) / Sydney(26.52℃) / Kuala Lumpur(26.26℃) / Kinshasa(26.22℃) | ![](assets/images/chat-ui-test2-feb-highest10.png) |
+| 3 | 各都市の年間の気温差（月別平均気温の最大と最小の差）が小さい都市Top10を教えてください | Nairobi(1.26) / Singapore(1.40) / Kuala Lumpur(2.09) / Kinshasa(2.67) / Bogota(2.94) / Abidjan(3.08) / Bandung(3.66) / Lagos(3.70) / Accra(3.72) / Dar es Salaam(3.83) | ![](assets/images/chat-ui-test3-annual-range-min10.png) |
+| 4 | 4月と9月の平均気温の差が最も大きい都市Top5を教えてください | Saint Petersburg(8.44) / Amsterdam(7.85) / London(7.56) / Moscow(7.43) / Vancouver(6.93) | ![](assets/images/chat-ui-test4-apr-sep-diff-top5.png) |
+
+いずれも `execute`（サンドボックス内で mock-api を約100回呼び出す集計コードを実行）を経て
+LLM に返るのは Top5/Top10 の集計結果のみであることを、応答サイズ・生成コードログの両面で
+確認済み（2026-09-05）。
 
 ---
 
@@ -145,7 +160,7 @@ Code Mode の効果（生データを LLM に渡さない）を数値で示す�
   - [ ] MCP クライアント側のトークン計測 / ログで、レスポンスに含まれるデータ量を比較
   - [ ] Code Mode 有効時、LLM に渡るのは集計結果（5 件）のみであることを確認
 
-§3.5 の Chat UI 実行結果でも、各 `execute` 呼び出しの応答サイズ（数千文字程度、
+§3 の Chat UI 実行結果でも、各 `execute` 呼び出しの応答サイズ（数千文字程度、
 12,000 件の生データではない）が画面上で確認できる。さらに厳密な LLM トークン使用量
 （`usage.inputTokens` / `outputTokens`）は、chat-ui がリクエストごとに構造化ログとして
 stdout へ出力しており（`onEnd`、[ADR-0006](docs/decisions/0006-log-observability-stack.md)）、
