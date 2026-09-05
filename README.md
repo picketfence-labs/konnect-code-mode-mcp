@@ -43,6 +43,7 @@ flowchart LR
 |---|---|
 | [README.md](README.md) | 本ファイル（趣旨・構成・全体像） |
 | [INSTRUCTIONS.md](INSTRUCTIONS.md) | **デモ検証手順**（デプロイ後の疎通・クエリ・Top5 / トークン削減の確認） |
+| [TEST.md](TEST.md) | Chat UIデモクエリのテストケース集（入力/出力/画面キャプチャ/実ログ） |
 | [deploy/README.md](deploy/README.md) | Minikube デプロイ手順（mock-api） |
 | [CODE_MODE.md](CODE_MODE.md) | Context Mesh / Code Mode の調査メモ・アーキテクチャ・実装方針 |
 | [CODE_MODE_LOCAL_TEST.md](CODE_MODE_LOCAL_TEST.md) | デモ設計 + ローカル単体検証手順（通常は実施不要） |
@@ -64,7 +65,7 @@ flowchart TB
 
 - **デプロイ手順**: [deploy/README.md](deploy/README.md)（mock-api の Minikube デプロイ）。
 - **検証手順**: [INSTRUCTIONS.md](INSTRUCTIONS.md)（デプロイ後の疎通・デモクエリ・
-  Top5 / トークン削減の確認）。
+  Top5 / トークン削減の確認）。個別テストケースの詳細は [TEST.md](TEST.md)。
 - **調査メモ / アーキテクチャ**: [CODE_MODE.md](CODE_MODE.md)（Code Mode の仕組み・
   トークン削減の原理・コード生成の詳細）。
 - **ローカル単体検証（通常不要）**: Konnect / K8s を挟まずローカルだけで Code Mode の

@@ -136,15 +136,10 @@ mock-api・MCP サーバーの実ログを LogQL で検索することで、Code
 
 ### テストケース
 
-「過去10年の3月の平均気温Top5」以外にも、以下のクエリで正しく集計できることを確認済み
-（期待値は`mock-api/data/temperatures.json`から算出した実データの答え合わせ値）。
-
-| # | 入力プロンプト | 期待値 | 実行結果 |
-|---|---|---|---|
-| 1 | 過去10年の8月の平均気温が低い都市Top5を教えてください | Melbourne(5.64℃) / Santiago(6.28℃) / Auckland(6.37℃) / Cape Town(8.87℃) / Buenos Aires(9.58℃) | ![](assets/images/chat-ui-test1-aug-lowest5.png) |
-| 2 | 過去10年の2月の平均気温が高い都市Top10を教えてください | Jakarta(29.98℃) / Rio de Janeiro(29.42℃) / Luanda(28.26℃) / Singapore(27.76℃) / Dar es Salaam(27.66℃) / Buenos Aires(26.72℃) / Khartoum(26.66℃) / Sydney(26.52℃) / Kuala Lumpur(26.26℃) / Kinshasa(26.22℃) | ![](assets/images/chat-ui-test2-feb-highest10.png) |
-| 3 | 各都市の年間の気温差（月別平均気温の最大と最小の差）が小さい都市Top10を教えてください | Nairobi(1.26) / Singapore(1.40) / Kuala Lumpur(2.09) / Kinshasa(2.67) / Bogota(2.94) / Abidjan(3.08) / Bandung(3.66) / Lagos(3.70) / Accra(3.72) / Dar es Salaam(3.83) | ![](assets/images/chat-ui-test3-annual-range-min10.png) |
-| 4 | 4月と9月の平均気温の差が最も大きい都市Top5を教えてください | Saint Petersburg(8.44) / Amsterdam(7.85) / London(7.56) / Moscow(7.43) / Vancouver(6.93) | ![](assets/images/chat-ui-test4-apr-sep-diff-top5.png) |
+「過去10年の3月の平均気温Top5」以外にも、複数のクエリパターン（月指定の集計、Top10、
+月別全件集計、2つの月の差分算出など）で正しく集計できることを確認済み。各テストケースの
+入力・期待値・画面キャプチャ・実ログ（mock-api / mcp-server）は [TEST.md](TEST.md) に
+1件ずつ切り分けて記録している。
 
 いずれも `execute`（サンドボックス内で mock-api を約100回呼び出す集計コードを実行）を経て
 LLM に返るのは Top5/Top10 の集計結果のみであることを、応答サイズ・生成コードログの両面で
@@ -180,6 +175,7 @@ Session not found / egress ガード 等）を参照。
 
 ## 参照
 
+- テストケース集（Chat UIデモクエリの入力/出力/ログ）: [TEST.md](TEST.md)
 - デプロイ手順: [deploy/README.md](deploy/README.md)
 - Chat UI 技術背景: [ADR-0004](docs/decisions/0004-chat-ui-tech-stack.md)
 - ログ基盤（トークン使用量の実測）: [deploy/observability/README.md](deploy/observability/README.md)
