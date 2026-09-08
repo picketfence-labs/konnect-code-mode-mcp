@@ -56,8 +56,12 @@ Kong Konnect Context Mesh を使い、AIエージェントのLLMトークン量�
    **Chat UI構築とは別に、利用者個人のClaude Code（CLI）からの継続的な接続は
    Obsidian Vaultセッション側が`--scope user`で設定する**（本リポジトリの開発セッションの
    スコープ外。2026-09-04、利用者の判断）。
-6. **ログ基盤整備**: mock-api・MCP Server のログを、現状はコンテナログを直接見て確認している。
-   Grafana/Loki、または AI/MCP 評価に向いたログ基盤で両者のログを集約・検証できる仕組みにする。
+6. ~~**ログ基盤整備**~~ → **完了（2026-09-05）**: mock-api・MCP Server のログを、それまでは
+   コンテナログを直接見て確認していた問題を解消。`grafana/loki-stack` Helm chart（Grafana Loki
+   + Promtail）を`observability` namespaceにデプロイし、Kong DP経由（`/grafana`）で公開。
+   実際にchat-ui経由でクエリを送信し、mock-api・MCP Server双方のログがLoki APIで収集・検索
+   できることを確認した。詳細: [ADR-0006](decisions/0006-log-observability-stack.md)、
+   [deploy/observability/README.md](../deploy/observability/README.md)。
 7. Context Mesh の GA（2026年9〜10月予定）に伴う仕様変更への追随（継続的なメンテナンス）。
 8. 社内リファレンスとしての継続運用・Obsidian Vault（`02-Areas`/`07-Sources`）への知見フィード
    バック窓口としての役割を保つ。
