@@ -66,12 +66,19 @@ helm upgrade --install loki grafana/loki-stack \
   --set grafana.enabled=true \
   --set promtail.enabled=true \
   --set loki.persistence.enabled=false \
+  --set grafana."grafana\.ini".server.domain="localhost" \
   --set grafana."grafana\.ini".server.root_url="%(protocol)s://%(domain)s/grafana/" \
-  --set grafana."grafana\.ini".server.serve_from_sub_path=true
+  --set grafana."grafana\.ini".server.serve_from_sub_path=true \
+  --set grafana."grafana\.ini".security.csrf_trusted_origins="localhost"
 ```
 
 `loki.persistence.enabled=false`はデモ用の簡易構成（Pod再作成でログが消える）。
 永続化したい場合は`--set loki.persistence.enabled=true`と適切な`storageClassName`を指定する。
+
+`server.domain`と`security.csrf_trusted_origins`は必須（2026-09-08判明。詳細:
+[troubleshooting-log.md](../../docs/troubleshooting-log.md)）。`domain`未指定のままだと
+Grafana 10.3のOrigin検証（CSRF対策）に失敗し、Explore等でのLokiクエリ実行時に
+`origin not allowed`エラーになる。
 
 ### 2. Grafana を Kong DP 経由で公開する
 
