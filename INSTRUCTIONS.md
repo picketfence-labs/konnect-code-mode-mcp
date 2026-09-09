@@ -30,26 +30,33 @@ flowchart LR
 
 ## §1. 上流 API（mock-api）の稼働確認
 
-デモの前提として、mock-api がクラスタ内・Mac 双方から到達できることを確認する。
+デモの前提として、mock-api が Mac から到達できることを確認する。デモ本番のクエリ経路と
+同じ **Kong DP 経由**（`http://localhost/mock-api`）を使う（詳細:
+[deploy/README.md](deploy/README.md) §5「Kong DP をMacから到達可能にする」）。
+
+> 前提: 別ターミナルで `minikube tunnel` を常駐させていること（起動時に対話的な `sudo`
+> パスワード入力が必要なため、**利用者自身がターミナルで直接実行**する。エージェントの
+> バックグラウンドシェルからは起動できない）。
 
 ```bash
-# 別ターミナルで port-forward を常駐（固定ポート 8088）
-kubectl -n demo port-forward svc/mock-api 8088:80
-
-# Mac から
-curl http://localhost:8088/health
+# Mac から（Kong DP 経由。minikube tunnel 常駐済みが前提）
+curl http://localhost/mock-api/health
 # → {"status":"ok","cities":100,"temperatures":12000}
+```
 
-# クラスタ内 DNS（Kong DP が使う経路）
-kubectl -n demo run dnstest --image=busybox:1.36 --restart=Never --rm -i --quiet \
-  --command -- wget -qO- http://mock-api.demo.svc.cluster.local/health
+mock-api単体（Kong DPを介さない直接到達）を切り分けたい場合のみ、以下のport-forward
+方式も使える（固定ポート `8088`。以降の§2以降はKong DP経由の前提で進める）:
+
+```bash
+kubectl -n demo port-forward svc/mock-api 8088:80  # 別ターミナルで常駐
+curl http://localhost:8088/health
 ```
 
 チェックリスト:
 
 - [ ] `kubectl -n demo get pods` → `mock-api-*` が Running
-- [ ] `localhost:8088/health` が 200 / `cities:100, temperatures:12000`
-- [ ] クラスタ内 DNS で `mock-api.demo.svc.cluster.local` に到達可能
+- [ ] `minikube tunnel` が別ターミナルで稼働中
+- [ ] `curl http://localhost/mock-api/health` が 200 / `cities:100, temperatures:12000`
 
 ---
 
@@ -87,26 +94,34 @@ MCP クライアントを自前で用意しなくても、ブラウザから同�
 「過去10年の3月の平均気温Top5を教えてください」と入力して送信する。
 
 回答が返るまでの間、画面上に `list_tools` → `get_schema` → `execute`（複数回）という
-Code Mode の内部ツール呼び出しが逐次表示され、それぞれの応答サイズ（文字数）も
-確認できる。最終的な回答として Top5 のみが整形されて表示される:
+Code Mode の内部ツール呼び出しが逐次表示され、それぞれの入出力サイズ（`input: X tokens |
+output: Y tokens`、文字数からの概算）も確認できる。最終的な回答として Top5 のみが
+Markdownテーブルとして整形されて表示される:
 
 ![Chat UI クエリ実行結果](assets/images/chat-ui-query-result.png)
 
 ### 内部動作の確認方法（キャプチャ付き）
 
-画面上の応答サイズだけでなく、ログ基盤（Grafana Loki + Promtail。
+画面上のトークン数表示だけでなく、ログ基盤（Grafana Loki + Promtail。
 [deploy/observability/README.md](deploy/observability/README.md)、
 [ADR-0006](docs/decisions/0006-log-observability-stack.md)）の Explore 画面で
 mock-api・MCP サーバーの実ログを LogQL で検索することで、Code Mode が
 「大量データの取得・加工をサンドボックス内で完結させ、結果だけを返している」
 ことを直接確認できる。
 
-```bash
-# 前提: mock-apiやChat UIと同じKong DP経由でGrafanaにアクセス
-# （minikube tunnel常駐 + deploy/kong/grafana-kong.yaml適用済みであること。
-#   手順・パスワード取得は deploy/observability/README.md 参照）
-# ブラウザで http://localhost/grafana → Explore → データソース Loki
-```
+前提: mock-apiやChat UIと同じKong DP経由でGrafanaにアクセスする
+（`minikube tunnel`常駐 + `deploy/kong/grafana-kong.yaml`適用済みであること。デプロイ手順は
+[deploy/observability/README.md](deploy/observability/README.md)参照）。
+
+ブラウザで **http://localhost/grafana/explore** を開く（**ログイン不要**。匿名アクセスで
+Admin権限が付与されている）。以下の手順でLogQLを実行する:
+
+1. クエリ入力欄右上の **`Builder` / `Code`** トグルで **`Code`を選択する**（初期状態の
+   `Builder`はGUIでラベルを選ぶ画面で、LogQLを直接貼り付ける欄が無い。ここが最初の
+   つまずきポイント）
+2. 下記のLogQLを貼り付けて **`Run query`**（またはShift+Enter）
+3. 画面右上の時刻レンジ（既定 **Last 1 hour**）が、実際にデモクエリを実行した時刻を
+   含んでいるか確認する（含んでいなければ結果は0件になる）
 
 **mock-api が100回以上コールされているログ**（正規化APIのため `listCities` → 各都市の
 `getTemperatures` をループする設計。詳細は[CLAUDE.md](CLAUDE.md)参照）。以下のLogQLで検索する:
@@ -114,6 +129,11 @@ mock-api・MCP サーバーの実ログを LogQL で検索することで、Code
 ```logql
 {namespace="demo", app="mock-api"} |= "GET /temperatures"
 ```
+
+> クエリによっては、結果本体（下段の「Logs」パネル）は正常でも、上の「Logs volume」
+> （ヒストグラム）パネルだけ`Failed to load log volume for this query`という無関係な
+> エラーを表示することがある（Grafanaが自動生成する集計用クエリ側の問題で検索結果には
+> 影響しない。出ても無視して「Logs」パネルを見てよい）。
 
 1クエリあたり `Line limit: 1000 (302 returned)` のように、Top10クエリ2回分・Top5クエリ2回分の
 実行結果として300件超のヒットが確認できる（1クエリ ≒ 100件の `getTemperatures` 呼び出し）:
@@ -142,8 +162,8 @@ mock-api・MCP サーバーの実ログを LogQL で検索することで、Code
 1件ずつ切り分けて記録している。
 
 いずれも `execute`（サンドボックス内で mock-api を約100回呼び出す集計コードを実行）を経て
-LLM に返るのは Top5/Top10 の集計結果のみであることを、応答サイズ・生成コードログの両面で
-確認済み（2026-09-05）。
+LLM に返るのは Top5/Top10 の集計結果のみであることを、入出力トークン数表示・生成コード
+ログの両面で確認済み（2026-09-05。トークン数表示は2026-09-09にPR #14で追加）。
 
 ---
 
@@ -156,8 +176,8 @@ Code Mode の効果（生データを LLM に渡さない）を数値で示す�
   - [ ] MCP クライアント側のトークン計測 / ログで、レスポンスに含まれるデータ量を比較
   - [ ] Code Mode 有効時、LLM に渡るのは集計結果（5 件）のみであることを確認
 
-§3 の Chat UI 実行結果でも、各 `execute` 呼び出しの応答サイズ（数千文字程度、
-12,000 件の生データではない）が画面上で確認できる。さらに厳密な LLM トークン使用量
+§3 の Chat UI 実行結果でも、各 `execute` 呼び出しの入出力トークン数（概算、数百〜数千
+トークン程度、12,000 件の生データではない）が画面上で確認できる。さらに厳密な LLM トークン使用量
 （`usage.inputTokens` / `outputTokens`）は、chat-ui がリクエストごとに構造化ログとして
 stdout へ出力しており（`onEnd`、[ADR-0006](docs/decisions/0006-log-observability-stack.md)）、
 ログ基盤（[deploy/observability/README.md](deploy/observability/README.md)）経由の
