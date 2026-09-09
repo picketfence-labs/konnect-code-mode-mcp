@@ -247,3 +247,28 @@
 - **コスト**: 軽微（コンフリクト自体の解消は数分。ただし今後同種のドキュメント作業を
   始める前に`git fetch && git log main..origin/main`等で他の並行作業の有無を確認する
   ひと手間を怠らないこと）
+
+## 2026-09-08 Grafana 10.3で`server.domain`未設定のためLokiクエリが`origin not allowed`で失敗
+
+- **何を期待していたか**: [deploy/observability/README.md](../deploy/observability/README.md)
+  の手順（`server.root_url`/`serve_from_sub_path`のみ設定）でGrafanaをデプロイし、
+  ブラウザから`http://localhost/grafana`のExploreでLokiクエリ（例:
+  `{namespace="demo", app="mock-api"} |= "GET /temperatures"`）を実行すれば、
+  mock-api・mcp-serverのログが検索できると想定していた
+- **実際どうだったか**: Explore上でクエリを実行すると`Query error / origin not allowed`
+  が返り、ログを一切参照できなかった。`curl`で`/grafana/api/ds/query`に直接POSTしても
+  同じ`origin not allowed`（HTTP 403）を再現
+- **原因**: 既存手順の`helm upgrade --set`では`server.root_url`に
+  `%(protocol)s://%(domain)s/grafana/`というテンプレートを使っていたが、`server.domain`
+  自体を明示的に設定していなかったため、Grafanaのデフォルト（空文字）のまま解決され、
+  実質的に不正な`root_url`になっていた。Grafana 10.3で導入されたOrigin検証
+  （CSRF対策、`/api/ds/query`等のstate-changingリクエストが対象）が、ブラウザの
+  `Origin: http://localhost`ヘッダーを信頼済みオリジンと照合できず拒否していた
+- **対処・回避方法**: `helm upgrade`に
+  `--set grafana."grafana\.ini".server.domain="localhost"`と
+  `--set grafana."grafana\.ini".security.csrf_trusted_origins="localhost"`を追加して
+  再デプロイ。`curl`で`/grafana/api/ds/query`に対し実際のLoki検索クエリを投げ、
+  200 OKで該当ログ（`GET /temperatures?city_id=...&month=8`等）が返ることを確認した。
+  手順を[deploy/observability/README.md](../deploy/observability/README.md)へ反映済み
+- **コスト**: 中程度（Grafana設定APIでの`root_url`解決状況の確認、CSRF/Origin検証の
+  仕組みの切り分けに30分程度）
