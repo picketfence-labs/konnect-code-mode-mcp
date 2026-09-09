@@ -272,3 +272,36 @@
   手順を[deploy/observability/README.md](../deploy/observability/README.md)へ反映済み
 - **コスト**: 中程度（Grafana設定APIでの`root_url`解決状況の確認、CSRF/Origin検証の
   仕組みの切り分けに30分程度）
+
+## 2026-09-09 Grafana Exploreでの実操作にログイン・UI操作上の追加の躓きが判明（利用者フィードバック）
+
+- **何を期待していたか**: 上記のOrigin検証修正で`origin not allowed`が解消すれば、
+  利用者が`http://localhost/grafana`でログインし、Exploreの入力欄にLogQLをそのまま
+  貼り付けて実行できると想定していた
+- **実際どうだったか**: 利用者から「Lokiでの確認に苦戦した」とフィードバックがあり、
+  再現・切り分けたところ、Origin検証以外にも以下2点が実際の操作を妨げていた
+  1. **ログイン自体が手間**: `admin`ユーザーのパスワードをmanifestから取得する手順が
+     必要で、デモの検証作業としては過剰なステップだった
+  2. **Explore初期状態は`Builder`モード**: LogQLを直接貼り付けるテキスト欄が無く、
+     ラベルをドロップダウンで選択するGUI（Builder）が初期表示される。右上の
+     `Builder`/`Code`トグルで明示的に`Code`へ切り替えないと、ドキュメント記載の
+     LogQLをそのまま実行できない（既存の[deploy/observability/README.md](../deploy/observability/README.md)・
+     [INSTRUCTIONS.md](../INSTRUCTIONS.md)双方にこの手順が欠けていた）
+  3. （副次的に発見、実害なし）一部のLogQL（`|=`によるライン文字列フィルタを含むもの）
+     で、結果本体（「Logs」パネル）は正常に返るにもかかわらず、Grafanaが自動生成する
+     「Logs volume」ヒストグラム用の補助クエリだけが`parse error ... unexpected
+     IDENTIFIER`で失敗し、紛らわしい赤いエラーバナーが表示される（Loki/Grafana側の
+     volume集計クエリ生成ロジックの問題と推測。本体の検索結果には影響しないことを
+     ネットワークリクエストのレスポンスボディで確認済み）
+- **原因**: (1)(2)はデプロイ手順のUX検証がAPI経由の疎通確認（curl）どまりで、
+  実際に人間が正規のGrafana UI操作フロー（ログイン→Explore→Builder/Code切り替え）を
+  一通りたどっていなかったため見落とした
+- **対処・回避方法**:
+  1. `auth.anonymous.enabled=true` + `org_role=Admin` + `auth.disable_login_form=true`を
+     `helm upgrade --set`に追加し、ログイン不要でAdmin権限アクセスできるようにした
+     （デモ用ローカルMinikube限定、`minikube tunnel`経由でMac以外からは到達不可のため許容）
+  2. [deploy/observability/README.md](../deploy/observability/README.md)・
+     [INSTRUCTIONS.md](../INSTRUCTIONS.md)の両方に「`Code`モードへの切り替えが必要」
+     「既定の時刻レンジ（Last 1 hour）に注意」「Logs volumeパネルのエラーは無視してよい」
+     を明記した
+- **コスト**: 中程度（Playwrightで実際のExplore操作を再現し原因切り分けに30分程度）
