@@ -3,13 +3,16 @@
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
-function partSize(value: unknown): number {
-  try {
-    return JSON.stringify(value).length
-  } catch {
-    return 0
-  }
+// LLMの実トークナイザーではなく、文字数からの概算（英語圏で一般的な4文字≒1トークン目安）。
+// tool呼び出し1件ごとの入出力サイズ感（トークン削減効果）を示す目的で十分な精度とする
+function estimateTokens(value: unknown): number {
+  if (value === undefined) return 0
+  const text = typeof value === 'string' ? value : JSON.stringify(value)
+  if (!text) return 0
+  return Math.ceil(text.length / 4)
 }
 
 export default function ChatPage() {
@@ -45,9 +48,9 @@ export default function ChatPage() {
             {message.parts.map((part, i) => {
               if (part.type === 'text') {
                 return (
-                  <p key={i} className="whitespace-pre-wrap text-slate-800">
-                    {part.text}
-                  </p>
+                  <div key={i} className="prose prose-sm prose-slate max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{part.text}</ReactMarkdown>
+                  </div>
                 )
               }
               // MCP経由のツール（search/get_schema/execute等）は動的ツールとして
@@ -71,7 +74,11 @@ export default function ChatPage() {
                     {' — '}
                     {toolPart.state}
                     {toolPart.state === 'output-available' && (
-                      <span> （応答サイズ: {partSize(toolPart.output)} 文字）</span>
+                      <span>
+                        {' '}
+                        （input: {estimateTokens(toolPart.input)} tokens | output:{' '}
+                        {estimateTokens(toolPart.output)} tokens）
+                      </span>
                     )}
                   </div>
                 )
