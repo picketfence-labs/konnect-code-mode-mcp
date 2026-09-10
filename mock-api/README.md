@@ -7,24 +7,9 @@ Konnect Code Mode MCP の実証テストの両方で使用する。
 
 2 つのエンティティに正規化されている（`temperatures.city_id` → `cities.id`）。
 
-```mermaid
-erDiagram
-  CITY ||--o{ TEMPERATURE : has
-  CITY {
-    int id PK
-    string city
-    string country
-    float latitude
-    float longitude
-  }
-  TEMPERATURE {
-    int id PK
-    int city_id FK
-    int year
-    int month
-    float temp "摂氏 (°C)"
-  }
-```
+[![mock-api データモデル (ER図)](../assets/diagrams/mock-api-data-model.png)](https://picketfence-labs.github.io/diagrams/9f128b7a374f/)
+
+*（画像クリックでインタラクティブ版を開く）*
 
 - **cities**: 世界主要 **100 都市**（`data/cities.json`）。
 - **temperatures**: 100 都市 × 12 か月 × 10 年 (2016–2025) = **12,000 レコード**（`data/temperatures.json`）。

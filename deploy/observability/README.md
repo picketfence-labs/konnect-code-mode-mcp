@@ -5,24 +5,9 @@ mock-api・MCP Server・chat-ui のログを集約するログ基盤。技術選
 
 ## 構成
 
-```mermaid
-flowchart LR
-  subgraph Pods["各Namespaceのコンテナ"]
-    chatui["chat-ui\n(demo ns)\n構造化JSONログ<br/>onEnd: usage/steps/toolCalls"]
-    mcp["MCP Server\n(default ns)\nCode Mode生成コード・\ncall_tool結果の非構造化ログ<br/>（app.pyはこのリポジトリから変更不可）"]
-    mockapi["mock-api\n(demo ns)"]
-  end
-  subgraph obs["observability namespace"]
-    promtail["Promtail\n(DaemonSet)"]
-    loki["Loki"]
-    grafana["Grafana"]
-  end
-  chatui -->|stdout| promtail
-  mcp -->|stdout| promtail
-  mockapi -->|stdout| promtail
-  promtail --> loki
-  grafana -->|LogQL| loki
-```
+[![ログ基盤の構成（Grafana Loki + Promtail）](../../assets/diagrams/observability-log-pipeline.png)](https://picketfence-labs.github.io/diagrams/a877dacf0443/)
+
+*（画像クリックでインタラクティブ版を開く）*
 
 - **chat-ui**: 自分たちで書いているコード（`chat-ui/app/api/chat/route.ts`）の
   `streamText`の`onEnd`コールバックで、リクエストごとに`{event: "chat_completed",

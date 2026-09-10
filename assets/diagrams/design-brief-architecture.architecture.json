@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "設計ブリーフ: Context Mesh デモ アーキテクチャ",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "ui", "type": "frontend", "label": "Context Mesh UI", "sublabel": "MCP Servers / Sources", "pos": [60, 30], "size": [220, 80] },
+    { "id": "cp", "type": "backend", "label": "Control Plane", "sublabel": "context-mesh-demo", "pos": [500, 30], "size": [220, 80] },
+
+    { "id": "agent", "type": "external", "label": "AIエージェント", "sublabel": "現在: Claude Code等", "tag": "将来: Chat UI", "pos": [60, 315], "size": [220, 80] },
+
+    { "id": "op", "type": "backend", "label": "Kong Operator", "sublabel": "FEATURE_GATES=mcp-server", "tag": "ENABLE_CONTROLLER_KONNECT=true", "pos": [500, 180], "size": [220, 80] },
+    { "id": "dp", "type": "security", "label": "DataPlane", "sublabel": "kong/kong-gateway:3.14", "tag": "replicas 3", "pos": [500, 315], "size": [220, 80] },
+    { "id": "mcp", "type": "backend", "label": "生成 MCP Server Pod", "sublabel": "FastMCP + CodeMode", "pos": [810, 315], "size": [210, 80] },
+    { "id": "api", "type": "backend", "label": "mock-api", "sublabel": "気温12,000件", "tag": "ClusterIP", "pos": [653, 440], "size": [220, 80] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Konnect (SaaS)", "wraps": ["ui", "cp"], "pad": 20 },
+    { "kind": "region", "label": "Kubernetes (minikube, driver=docker)", "wraps": ["op", "dp", "mcp", "api"], "pad": 20 }
+  ],
+  "connections": [
+    { "from": "ui", "to": "cp", "label": "Source登録・MCP Server定義", "variant": "emphasis" },
+    { "from": "cp", "to": "op", "label": "signal", "variant": "emphasis", "labelDy": 24 },
+    { "from": "op", "to": "dp", "label": "DataPlane CR実体化", "variant": "emphasis", "labelDy": 24 },
+    { "from": "dp", "to": "api", "label": "KongRoute /mock-api", "fromSide": "bottom", "toSide": "top" },
+    { "from": "dp", "to": "mcp", "label": "MCPルート" },
+    { "from": "mcp", "to": "api", "label": "外部関数呼び出し", "variant": "dashed", "fromSide": "bottom", "toSide": "top" },
+    { "from": "agent", "to": "dp", "label": "minikube tunnel経由", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Konnect → K8s 反映", "items": [
+      "UI→CP: Source登録・MCP Server定義",
+      "CP→Operator: signal（FEATURE_GATES=mcp-server、ENABLE_CONTROLLER_KONNECT=true）",
+      "Operator→DataPlane CR実体化（kong/kong-gateway:3.14、replicas 3）"
+    ] },
+    { "dot": "violet", "title": "mock-apiへの2経路（別物）", "items": [
+      "DP経由 KongRoute /mock-api: デバッグ用の直接到達経路",
+      "生成MCP Server Pod（FastMCP + CodeMode）は外部関数呼び出しでmock-apiを直接叩く",
+      "AIエージェントが実接続するMCPエンドポイントとは別物"
+    ] },
+    { "dot": "amber", "title": "外部アクセス", "items": [
+      "AIエージェント（現在: Claude Code等。将来: Chat UI）→ minikube tunnel経由でDataPlaneへ",
+      "mock-api: 気温12,000件・ClusterIP"
+    ] }
+  ]
+}

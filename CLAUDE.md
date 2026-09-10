@@ -50,8 +50,12 @@ API が約 1 万件のレコードを返す状況で、AI エージェントか�
 
 ## ドキュメント規約
 
-- **ダイアグラムは必ず Mermaid 形式で記述する**（ASCII アートは使わない）。アーキテクチャ図・
-  シーケンス図・データフロー図などはすべて ` ```mermaid ` コードブロックで書くこと。
+- **ダイアグラムは Mermaid ではなく [Archify](https://github.com/tt-a1i/archify) で作成する**
+  （2026-09-10、Obsidian Vault側 Archify導入Projectの方針転換に伴い全図をMermaidから移行済み。
+  ASCII アートも使わない）。各図はソース（JSON IR）・生成HTML（インタラクティブ版）・
+  埋め込み用PNGの3点セットを `assets/diagrams/` に置き、Markdown本文にはPNGを埋め込んだ上で
+  `picketfence-labs/diagrams`（GitHub Pages）でホストしたインタラクティブ版へリンクする
+  （既存の図・Markdownの書き方を実例として参照）。新規追加・既存図の更新もこの形式に従うこと。
 
 ## 役割分担 / 進め方
 

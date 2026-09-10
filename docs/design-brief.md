@@ -68,28 +68,9 @@ Kong Konnect Context Mesh を使い、AIエージェントのLLMトークン量�
 
 ## 3. アーキテクチャ
 
-```mermaid
-flowchart TB
-  subgraph Konnect["Konnect (SaaS)"]
-    CP["Control Plane<br/>context-mesh-demo"]
-    UI["Context Mesh UI<br/>(MCP Servers / Sources)"]
-  end
-  subgraph K8s["Kubernetes (minikube, driver=docker)"]
-    OP["Kong Operator<br/>FEATURE_GATES=mcp-server<br/>ENABLE_CONTROLLER_KONNECT=true"]
-    DP["DataPlane<br/>kong/kong-gateway:3.14 (replicas 3)"]
-    MCP["生成 MCP Server Pod<br/>(FastMCP + CodeMode)"]
-    API["mock-api<br/>(気温12,000件, ClusterIP)"]
-  end
-  Agent["AIエージェント<br/>(Claude Code等。将来: Chat UI)"]
+[![設計ブリーフ: Context Mesh デモ アーキテクチャ](../assets/diagrams/design-brief-architecture.png)](https://picketfence-labs.github.io/diagrams/7b178ebe12a3/)
 
-  UI -->|Source登録・MCP Server定義| CP
-  CP -->|signal| OP
-  OP -->|DataPlane CR実体化| DP
-  DP -->|KongRoute /mock-api| API
-  DP -->|MCPルート| MCP
-  MCP -->|外部関数呼び出し| API
-  Agent -->|minikube tunnel経由| DP
-```
+*（画像クリックでインタラクティブ版を開く）*
 
 - Konnect Control Plane（`context-mesh-demo`）⇄ Kong Operator（`mcp-server` feature-gate）⇄
   K8s DataPlane（`kong/kong-gateway:3.14`、replicas 3）

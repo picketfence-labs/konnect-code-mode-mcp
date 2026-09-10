@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ログ基盤の構成（Grafana Loki + Promtail）",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "chatui", "type": "frontend", "label": "chat-ui", "sublabel": "demo namespace", "tag": "構造化JSON", "pos": [60, 40], "size": [200, 92] },
+    { "id": "mcp", "type": "backend", "label": "MCP Server", "sublabel": "default namespace", "tag": "非構造化ログ", "pos": [60, 170], "size": [200, 108] },
+    { "id": "mockapi", "type": "backend", "label": "mock-api", "sublabel": "demo namespace", "pos": [60, 320], "size": [200, 92] },
+    { "id": "promtail", "type": "backend", "label": "Promtail", "sublabel": "DaemonSet", "pos": [420, 190], "size": [190, 88] },
+    { "id": "loki", "type": "database", "label": "Loki", "sublabel": "ログストレージ", "pos": [420, 340], "size": [190, 88] },
+    { "id": "grafana", "type": "frontend", "label": "Grafana", "sublabel": "可視化・クエリUI", "brand": "grafana", "pos": [660, 340], "size": [190, 88] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "各Namespaceのコンテナ", "wraps": ["chatui", "mcp", "mockapi"], "pad": 20 },
+    { "kind": "region", "label": "observability namespace", "wraps": ["promtail", "loki", "grafana"], "pad": 20 }
+  ],
+  "connections": [
+    { "id": "chatui-promtail", "from": "chatui", "to": "promtail", "label": "stdout", "labelAt": [300, 86] },
+    { "id": "mcp-promtail", "from": "mcp", "to": "promtail", "label": "stdout", "labelAt": [300, 224] },
+    { "id": "mockapi-promtail", "from": "mockapi", "to": "promtail", "label": "stdout", "labelAt": [300, 366] },
+    { "id": "promtail-loki", "from": "promtail", "to": "loki" },
+    { "id": "grafana-loki", "from": "grafana", "to": "loki", "label": "LogQL" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "収集の仕組み", "items": ["chat-ui / MCP Server / mock-apiの全Podがstdout経由でログを出力", "Promtail（DaemonSet）が各Namespaceを横断して自動収集", "収集したログはLokiに集約保存"] },
+    { "dot": "amber", "title": "ログ内容の違い", "items": ["chat-ui: 構造化JSONログ。onEndコールバックでusage/steps/toolCallsを記録", "MCP Server: Code Mode生成コード・call_tool結果の非構造化ログ", "MCP Serverのapp.pyはこのリポジトリから変更不可という制約がある"] },
+    { "dot": "violet", "title": "可視化", "items": ["GrafanaがLogQLでLokiに問い合わせて可視化", "Promtail/Loki/Grafanaはobservability namespaceに常駐"] }
+  ]
+}
