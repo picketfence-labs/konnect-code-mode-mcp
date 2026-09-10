@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ローカル PC 単体での Code Mode 検証環境",
+    "output": "local-test-overview.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "frontend",
+      "label": "MCP クライアント",
+      "sublabel": "(Claude Code など)",
+      "pos": [60, 260],
+      "size": [170, 90]
+    },
+    {
+      "id": "mcp",
+      "type": "backend",
+      "label": "生成 MCP サーバー",
+      "sublabel": "app.py (FastMCP + CodeMode)",
+      "tag": ":8080",
+      "pos": [340, 240],
+      "size": [210, 130]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "モック API (FastAPI)",
+      "sublabel": "/cities ・ /temperatures?city_id",
+      "tag": ":8000",
+      "pos": [660, 240],
+      "size": [230, 130]
+    }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "ローカル PC", "wraps": ["client", "mcp", "api"], "pad": 40 }
+  ],
+  "connections": [
+    { "id": "exec", "from": "client", "to": "mcp", "label": "execute (Python コード)", "fromSide": "top", "toSide": "top" },
+    { "id": "mcp-calls-api", "from": "mcp", "to": "api", "label": "listCities() = 1 回 ・ getTemperatures(city_id) = 100 回", "fromSide": "top", "toSide": "top" },
+    { "id": "raw-response", "from": "api", "to": "mcp", "label": "合計 12,000 件 (raw)", "fromSide": "bottom", "toSide": "bottom" },
+    { "id": "top5", "from": "mcp", "to": "client", "label": "上位 5 件のみ", "fromSide": "bottom", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "モック API のレスポンス件数", "items": ["/cities → 100 件", "/temperatures?city_id → 120 件/都市"] },
+    { "dot": "emerald", "title": "MCP サーバーからの呼び出し回数", "items": ["listCities() は 1 回", "getTemperatures(city_id) は都市数分 = 100 回"] },
+    { "dot": "amber", "title": "データ量とクライアントへの返却", "items": ["API から合計 12,000 件 (100 都市 × 120 件) の raw データを取得", "MCP クライアントへは上位 5 件のみを返却"] }
+  ]
+}

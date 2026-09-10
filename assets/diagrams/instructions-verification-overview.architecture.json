@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "検証環境の全体像（Minikube デプロイ後・Kong DP 経由）",
+    "output": "instructions-verification-overview.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "agent", "type": "external", "label": "AI エージェント", "sublabel": "MCP クライアント / Claude Code", "pos": [40, 260], "size": [160, 74] },
+    { "id": "dp", "type": "security", "label": "Kong DP", "sublabel": "hybrid mode", "pos": [300, 260], "size": [150, 74] },
+    { "id": "mcp", "type": "backend", "label": "生成 MCP サーバー", "sublabel": "FastMCP + CodeMode", "pos": [590, 260], "size": [170, 74] },
+    { "id": "api", "type": "backend", "label": "mock-api", "sublabel": "気温 12,000 件", "pos": [900, 260], "size": [160, 74] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Minikube (ローカル Data Plane)", "wraps": ["dp", "mcp", "api"], "pad": 44 }
+  ],
+  "connections": [
+    { "id": "agent-request", "from": "agent", "to": "dp", "label": "データ加工要件を含むリクエスト", "variant": "emphasis", "fromSide": "top", "toSide": "top" },
+    { "id": "dp-response", "from": "dp", "to": "agent", "variant": "emphasis", "fromSide": "bottom", "toSide": "bottom" },
+    { "id": "dp-to-mcp", "from": "dp", "to": "mcp", "fromSide": "top", "toSide": "top" },
+    { "id": "mcp-top5", "from": "mcp", "to": "dp", "label": "Top5 だけ", "variant": "emphasis", "fromSide": "bottom", "toSide": "bottom" },
+    { "id": "mcp-tool-call", "from": "mcp", "to": "api", "label": "サンドボックス内でツール呼び出し + 集計", "fromSide": "top", "toSide": "top" },
+    { "id": "api-raw-data", "from": "api", "to": "mcp", "label": "12,000 件 (raw)", "fromSide": "bottom", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "検証環境", "items": ["Minikube 上に Kong DP (hybrid mode) をデプロイ", "生成 MCP サーバーは FastMCP + CodeMode で動作", "mock-api が気温 12,000 件を保持"] },
+    { "dot": "emerald", "title": "データフロー", "items": ["AI エージェントがデータ加工要件を含むリクエストを Kong DP 経由で送信", "MCP サーバーがサンドボックス内で mock-api を呼び出し、12,000 件を取得・集計", "Kong DP 経由で Top5 だけをエージェントへ返却"] }
+  ]
+}

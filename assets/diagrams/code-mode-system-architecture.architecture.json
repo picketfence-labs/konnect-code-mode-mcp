@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kong Konnect Code Mode: システム全体アーキテクチャ",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "client", "type": "external", "label": "MCP Client", "sublabel": "AI エージェント", "pos": [40, 350], "size": [190, 90] },
+
+    { "id": "ui", "type": "frontend", "label": "AI Gateway Manager", "sublabel": "Visual Workflow Editor (UI)", "pos": [40, 40], "size": [190, 80] },
+    { "id": "cp", "type": "backend", "label": "Control Plane (CP)", "sublabel": "Manifest CRUD・ライフサイクル管理", "pos": [280, 40], "size": [170, 80] },
+    { "id": "cpapi", "type": "backend", "label": "内部 API", "sublabel": "CP ⇄ Data Plane 連携", "pos": [520, 40], "size": [240, 90] },
+
+    { "id": "operator", "type": "backend", "label": "Kong Operator", "sublabel": "feature-gate: mcp-server", "pos": [320, 220], "size": [200, 90] },
+    { "id": "kong", "type": "security", "label": "Kong Gateway (DP)", "sublabel": "hybrid mode・proxy", "pos": [320, 350], "size": [200, 90] },
+
+    { "id": "init", "type": "backend", "label": "init-container", "sublabel": "mcp-server-init.sh", "pos": [660, 220], "size": [200, 80] },
+    { "id": "main", "type": "backend", "label": "main-container", "sublabel": "mcp-server-runner (FastMCP :8080)", "pos": [660, 350], "size": [200, 90] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Konnect (SaaS)", "wraps": ["ui", "cp", "cpapi"], "pad": 22 },
+    { "kind": "region", "label": "Hybrid Data Plane = ローカル Kubernetes (Minikube)", "wraps": ["operator", "kong", "init", "main"], "pad": 34 },
+    { "kind": "security-group", "label": "MCP Server Pod", "wraps": ["init", "main"], "pad": 14 }
+  ],
+  "connections": [
+    { "from": "ui", "to": "cp", "label": "Workflow IR + Manifest", "variant": "emphasis", "labelDy": 64 },
+    { "from": "cp", "to": "cpapi", "label": "IR→Python生成 / CRUD", "variant": "emphasis", "labelDy": 74 },
+    { "from": "cpapi", "to": "operator", "label": "signal long-poll ⇄ data", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "via": [[640, 170], [420, 170]] },
+    { "from": "cpapi", "to": "init", "label": "code fetch (PAT/mTLS)", "variant": "dashed", "fromSide": "right", "toSide": "top", "via": [[820, 85], [820, 190], [760, 190]] },
+    { "from": "operator", "to": "init", "label": "Pod生成 (Service/Deployment)", "variant": "emphasis", "labelDy": 69 },
+    { "from": "operator", "to": "kong", "label": "KongService/KongRoute 反映", "variant": "default", "labelDy": 24 },
+    { "from": "kong", "to": "main", "label": "proxy", "variant": "default" },
+    { "from": "init", "to": "main", "label": "共有 EmptyDir (app.py)", "variant": "emphasis", "labelDy": 24 },
+    { "from": "client", "to": "kong", "label": "MCP リクエスト", "variant": "default" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "メインフロー（生成〜実行）", "items": ["UI → CP → CPAPI: Workflow IR / Manifest → Python 生成", "Kong Operator が /signal を long-poll し、CR から Pod を実体化", "init-container 検証 → 共有 EmptyDir → main-container が FastMCP 起動"] },
+    { "dot": "violet", "title": "内部 API（CPAPI）のエンドポイント", "items": ["/signal（long-poll）, /mcp-servers", "/mcp-servers/{id}/code ★生成コード", "/mcp-servers/{id}/kong-entities, /status"] },
+    { "dot": "amber", "title": "副次経路と実トラフィック", "items": ["init-container は CPAPI からコードを PAT/mTLS 経由で取得", "MCP Client は Kong Gateway 経由で main-container にアクセス"] }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Code Mode 全体像：生データの集計をサンドボックス内に閉じ込める",
+    "output": "readme-overview.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "agent", "type": "external", "label": "AI エージェント", "sublabel": "MCP クライアント", "pos": [40, 260], "size": [160, 90] },
+    { "id": "mcp", "type": "backend", "label": "生成 MCP サーバー", "sublabel": "FastMCP + CodeMode", "tag": "サンドボックス内で実行", "pos": [400, 240], "size": [200, 130] },
+    { "id": "api", "type": "cloud", "label": "上流 API", "sublabel": "mock-api", "tag": "気温データ 12,000 件", "pos": [800, 260], "size": [180, 90] }
+  ],
+  "connections": [
+    { "id": "agent-to-mcp", "from": "agent", "to": "mcp", "label": "データ加工要件を含むリクエスト", "fromSide": "top", "toSide": "top" },
+    { "id": "mcp-to-agent", "from": "mcp", "to": "agent", "label": "Top5 だけ返す", "variant": "emphasis", "fromSide": "bottom", "toSide": "bottom" },
+    { "id": "mcp-to-api", "from": "mcp", "to": "api", "label": "サンドボックス内でツール呼び出し + 集計", "fromSide": "top", "toSide": "top" },
+    { "id": "api-to-mcp", "from": "api", "to": "mcp", "label": "12,000 件 (raw)", "variant": "dashed", "fromSide": "bottom", "toSide": "bottom" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Code Mode の核心", "items": ["上流 API の生データ 12,000 件はサンドボックス内でのみ扱う", "エージェントへは集計済みの Top5 だけを返却しトークン量を削減"] },
+    { "dot": "emerald", "title": "生成 MCP サーバー", "items": ["FastMCP と CodeMode transform から自動生成", "ツール呼び出しと集計処理をサンドボックス内に隔離"] }
+  ]
+}

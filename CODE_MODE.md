@@ -39,57 +39,15 @@ API 定義は **OpenAPI spec** もしくは **Kong の Service Catalog** から�
 
 ## 2. システム全体アーキテクチャ
 
-```mermaid
-flowchart TB
-  subgraph Konnect["Konnect (SaaS)"]
-    UI["User Interface (AI Gateway Manager)<br/>Visual Workflow Editor → Workflow IR<br/>MCP Server Manifest"]
-    CP["Control Plane (CP)<br/>Manifest CRUD / ライフサイクル管理<br/>IR → Python 生成 (oas-to-python 相当)"]
-    CPAPI["内部 API<br/>/signal (long-poll)<br/>/mcp-servers<br/>/mcp-servers/{id}/code ★生成コード<br/>/mcp-servers/{id}/kong-entities<br/>/mcp-servers/{id}/status"]
-    UI --> CP --> CPAPI
-  end
+[![Kong Konnect Code Mode: システム全体アーキテクチャ](assets/diagrams/code-mode-system-architecture.png)](https://picketfence-labs.github.io/diagrams/fc57f2610c3a/)
 
-  subgraph DP["Hybrid Data Plane = ローカル Kubernetes (Minikube)"]
-    OP["Kong Operator (feature-gate: mcp-server)<br/>MCPServerCPReconciler: signal long-poll<br/>MCPServerReconciler: MCPServer CR を実体化"]
-    KONG["Kong Gateway (DP, hybrid mode)<br/>proxy path"]
-    subgraph POD["MCP Server Pod"]
-      INIT["init-container: mcp-server-init.sh<br/>curl .../code | jq .code > app.py<br/>py_compile で構文チェック → 共有 EmptyDir"]
-      MAIN["main-container: mcp-server-runner<br/>python /mcp-server/app.py (FastMCP, :8080)"]
-      INIT -->|共有 EmptyDir| MAIN
-    end
-    OP -->|"KongService / KongRoute / Service / Deployment 生成"| POD
-    OP --> KONG
-  end
-
-  CPAPI <-->|"signal (long-poll) / data"| OP
-  CPAPI -->|"code fetch (PAT / mTLS)"| INIT
-  CLIENT["MCP Client (AI エージェント)"] --> KONG
-  KONG --> MAIN
-```
+*（画像クリックでインタラクティブ版を開く）*
 
 ### ライフサイクル（docs/0003-lifecycle-management.md より）
 
-```mermaid
-sequenceDiagram
-  actor User as Konnect UI (ユーザー)
-  participant CP as Konnect CP
-  participant OP as Kong Operator
-  participant K8s as Kubernetes
-  participant Pod as MCP Server Pod
+[![MCP Server ライフサイクル（作成 → 稼働）](assets/diagrams/code-mode-lifecycle.png)](https://picketfence-labs.github.io/diagrams/243533e984f4/)
 
-  Note over OP,CP: CP 同期後、Operator が signal long-poll 開始
-  User->>CP: MCP サーバー作成
-  CP-->>OP: long-poll 解除 (signal)
-  OP->>OP: MCPServer CR を作成
-  OP->>CP: GetMCPServerKongEntities
-  CP-->>OP: KongService / KongRoute spec
-  OP->>K8s: KongService/KongRoute CR, Service, Deployment 生成
-  K8s->>Pod: Pod 起動 (init + main container)
-  Pod->>CP: init-container が /code を取得 (PAT/mTLS, backoff)
-  CP-->>Pod: 生成 Python (py_compile 検証 → 共有 EmptyDir)
-  Pod->>Pod: main-container が python app.py 起動 (:8080)
-  Pod-->>OP: K8s probe で health 報告
-  OP-->>CP: runtime status 報告
-```
+*（画像クリックでインタラクティブ版を開く）*
 
 > トラフィック経路: MCP Client → Kong Gateway → MCP Server Pod → (Tool 実行で) Kong Gateway
 > → 別の Upstream API。MCP Server は「もう 1 つの Upstream Service」として扱われる。
@@ -133,22 +91,9 @@ sequenceDiagram
   結果がサンドボックスに Python オブジェクトとして渡る。加工（group/sum/top5）はサンドボックス内。
   最終 return 値だけが LLM に返る。→ **1 万件は LLM コンテキストに一切入らない。**
 
-```mermaid
-flowchart LR
-  LLM["AI エージェント (LLM)"] -->|"Python コードを execute"| SB
-  subgraph SB["サンドボックス (MontySandboxProvider)"]
-    CODE["LLM 生成コード<br/>listCities() + getTemperatures()<br/>group / avg<br/>return top5"]
-  end
-  CODE -->|"ツール呼び出し (external_functions)"| TOOL["ツール関数 (_GuardedSession)"]
-  TOOL -->|"HTTP GET"| API["Upstream API"]
-  API -->|"1 万件 (raw)"| TOOL
-  TOOL -->|"1 万件 → サンドボックス内へ"| CODE
-  SB -->|"上位 5 件のみ"| LLM
-  linkStyle 5 stroke:#e0a000,stroke-width:2px
-  linkStyle 6 stroke:#2ca02c,stroke-width:2px
-```
+[![Code Mode の動作: サンドボックス境界でのデータ量非対称性](assets/diagrams/code-mode-sandbox-execution.png)](https://picketfence-labs.github.io/diagrams/6eb74034255d/)
 
-> 黄色線 = サンドボックス内に留まる 1 万件（LLM に入らない）／緑線 = LLM に返る 5 件。
+*（画像クリックでインタラクティブ版を開く。太線 = サンドボックス内に留まる 1 万件（LLM に入らない）／細線 = LLM に返る 5 件）*
 
 ### 3.3 トークン削減の原理（デモの主張）
 
