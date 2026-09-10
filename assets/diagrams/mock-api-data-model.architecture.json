@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "mock-api データモデル (ER図)",
+    "output": "mock-api-data-model.html",
+    "quality_profile": "showcase"
+  },
+  "cards": [
+    { "dot": "cyan", "title": "エンティティ", "items": ["CITY: 都市マスタ (PK id:int, city:string, country:string, latitude:float, longitude:float)", "TEMPERATURE: 気温レコード (PK id:int, FK city_id:int → CITY.id, year:int, month:int, temp:float 摂氏(°C))"] },
+    { "dot": "amber", "title": "データ規模", "items": ["世界主要100都市 × 12か月 × 10年 (2016–2025) = 12,000レコード", "実データではなく緯度等から合成した近似値。(city, year, month) をシードに固定しているため再生成しても同じ値になる"] },
+    { "dot": "slate", "title": "カーディナリティの読み方", "items": ["has (1 → N) = CITY 1件に対しTEMPERATUREは0件以上"] }
+  ],
+  "components": [
+    { "id": "city", "type": "database", "label": "CITY", "sublabel": "都市マスタ: PK id / city / country / latitude / longitude", "pos": [100, 150], "size": [300, 100] },
+    { "id": "temperature", "type": "database", "label": "TEMPERATURE", "sublabel": "気温レコード: PK id / FK city_id / year / month / temp (°C)", "pos": [580, 150], "size": [300, 100] }
+  ],
+  "connections": [
+    { "id": "city-has-temperature", "from": "city", "to": "temperature", "label": "has (1 → N)", "fromSide": "right", "toSide": "left" }
+  ]
+}

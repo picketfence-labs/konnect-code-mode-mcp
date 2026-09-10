@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "mock-api on Minikube: ネットワーク到達性",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "curl", "type": "external", "label": "curl / ブラウザ / Claude Code", "sublabel": "外部からの疎通確認", "pos": [40, 40], "size": [190, 74] },
+    { "id": "pf", "type": "backend", "label": "kubectl port-forward", "sublabel": "localhost:8088（常駐プロセス）", "pos": [40, 180], "size": [190, 80] },
+
+    { "id": "svc", "type": "backend", "label": "Service mock-api", "sublabel": "type: ClusterIP / mock-api.demo.svc", "pos": [330, 200], "size": [210, 80] },
+    { "id": "consumer", "type": "security", "label": "(将来) Kong DP", "sublabel": "Service DNS で参照", "pos": [600, 203], "size": [210, 74] },
+    { "id": "pod", "type": "backend", "label": "Pod mock-api:0.1.0", "sublabel": "container port :8000", "pos": [330, 320], "size": [210, 74] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "macOS ホスト", "wraps": ["curl", "pf"], "pad": 26 },
+    { "kind": "region", "label": "Docker VM (minikube node)", "wraps": ["svc", "pod", "consumer"], "pad": 34 },
+    { "kind": "security-group", "label": "Kubernetes (ns: demo)", "wraps": ["svc", "pod", "consumer"], "pad": 16 }
+  ],
+  "connections": [
+    { "id": "curl-to-pf", "from": "curl", "to": "pf", "label": "localhost:8088", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelAt": [135, 147] },
+    { "id": "pf-to-svc", "from": "pf", "to": "svc", "label": "API server 経由", "variant": "emphasis" },
+    { "id": "consumer-to-svc", "from": "consumer", "to": "svc", "label": "クラスタ内で到達", "variant": "dashed", "fromSide": "left", "toSide": "right", "labelAt": [570, 294] },
+    { "id": "svc-to-pod", "from": "svc", "to": "pod", "fromSide": "bottom", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Mac からの到達経路", "items": ["curl / ブラウザ / Claude Code は localhost:8088 で port-forward プロセスへ", "kubectl port-forward が API server 経由で Service mock-api まで常駐転送"] },
+    { "dot": "violet", "title": "クラスタ内の到達経路", "items": ["Service mock-api（ClusterIP, mock-api.demo.svc）が Pod mock-api:0.1.0 へルーティング", "(将来) Kong DP は Service DNS で svc を直接参照する想定（本図の時点では未構築）"] },
+    { "dot": "amber", "title": "macOS + docker driver の制約", "items": ["minikube ノードは Docker Desktop の VM 内で稼働し、Mac から直接ルーティングできない", "Mac からの手元確認は kubectl port-forward（固定 8088）を用いる"] }
+  ]
+}

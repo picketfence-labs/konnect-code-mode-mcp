@@ -26,24 +26,9 @@ Mac から到達させる方針にした（`deploy/kong/mock-api-kong.yaml` の 
 
 ## 構成図
 
-```mermaid
-flowchart LR
-  subgraph Mac["macOS ホスト"]
-    curl["curl / ブラウザ / Claude Code"]
-    pf["kubectl port-forward\n(localhost:8088, 常駐)"]
-  end
-  subgraph VM["Docker VM (minikube node)"]
-    subgraph K8s["Kubernetes (ns: demo)"]
-      svc["Service mock-api\ntype:ClusterIP\nmock-api.demo.svc"]
-      pod["Pod mock-api:0.1.0\n:8000"]
-      consumer["(将来) Kong DP\n→ svc DNS で参照"]
-    end
-  end
-  curl -->|localhost:8088| pf
-  pf -->|API server 経由| svc
-  consumer -->|クラスタ内で到達| svc
-  svc --> pod
-```
+[![mock-api on Minikube: ネットワーク到達性](../assets/diagrams/deploy-network-topology.png)](https://picketfence-labs.github.io/diagrams/6161fd80ff08/)
+
+*（画像クリックでインタラクティブ版を開く）*
 
 > **macOS + docker driver の制約**: ノードが Docker Desktop の VM 内で動くため、
 > クラスタ内ネットワークは Mac ホストから直接ルーティングできない。**Mac から手元で
