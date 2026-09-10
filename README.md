@@ -26,16 +26,9 @@ list_tools / get_schema / execute（複数回）という Code Mode の内部ツ
 
 ## 全体像
 
-```mermaid
-flowchart LR
-  AGENT["AI エージェント<br/>(MCP クライアント)"]
-  MCP["生成 MCP サーバー<br/>(FastMCP + CodeMode)"]
-  API["上流 API<br/>(mock-api: 気温 12,000 件)"]
-  AGENT -->|"データ加工要件を含むリクエスト"| MCP
-  MCP -->|"サンドボックス内でツール呼び出し + 集計"| API
-  API -->|"12,000 件 (raw)"| MCP
-  MCP -->|"Top5 だけ返す"| AGENT
-```
+[![Code Mode 全体像：生データの集計をサンドボックス内に閉じ込める](assets/diagrams/readme-overview.png)](https://picketfence-labs.github.io/diagrams/1390f7160707/)
+
+*（画像クリックでインタラクティブ版を開く）*
 
 ## リポジトリ構成
 
@@ -54,14 +47,9 @@ flowchart LR
 
 ## 構築・検証の流れ
 
-```mermaid
-flowchart TB
-  A["STEP 1: mock-api を Minikube にデプロイ<br/>(deploy/README.md)"]
-  B["STEP 2: Kong DP / Kong Operator をデプロイ"]
-  C["STEP 3: Konnect で MCP / Code Mode を定義 (Shinichi)"]
-  D["STEP 4: デモ検証（疎通 → クエリ → Top5 / トークン削減）<br/>(INSTRUCTIONS.md)"]
-  A --> B --> C --> D
-```
+[![デモ環境の構築・検証フロー](assets/diagrams/readme-build-verify-flow.png)](https://picketfence-labs.github.io/diagrams/dc9cd2ffdc49/)
+
+*（画像クリックでインタラクティブ版を開く）*
 
 - **デプロイ手順**: [deploy/README.md](deploy/README.md)（mock-api の Minikube デプロイ）。
 - **検証手順**: [INSTRUCTIONS.md](INSTRUCTIONS.md)（デプロイ後の疎通・デモクエリ・

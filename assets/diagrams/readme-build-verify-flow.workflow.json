@@ -1,0 +1,75 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "デモ環境の構築・検証フロー",
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "flow", "label": "構築・検証の流れ" }
+  ],
+  "mainPath": ["deploy_api", "deploy_kong", "define_mcp", "verify_demo"],
+  "nodes": [
+    {
+      "id": "deploy_api",
+      "lane": "flow",
+      "col": 0,
+      "type": "cloud",
+      "label": "STEP 1: mock-api デプロイ",
+      "sublabel": "Minikube 上に構築",
+      "tag": "deploy/README.md",
+      "width": 184
+    },
+    {
+      "id": "deploy_kong",
+      "lane": "flow",
+      "col": 1,
+      "type": "backend",
+      "label": "STEP 2: Kong DP / Operator デプロイ",
+      "sublabel": "Gateway 疎通準備",
+      "width": 250
+    },
+    {
+      "id": "define_mcp",
+      "lane": "flow",
+      "col": 2,
+      "type": "external",
+      "label": "STEP 3: MCP / Code Mode 定義",
+      "sublabel": "Konnect UI で手動実施 (Shinichi)",
+      "width": 200
+    },
+    {
+      "id": "verify_demo",
+      "lane": "flow",
+      "col": 3,
+      "type": "security",
+      "label": "STEP 4: デモ検証",
+      "sublabel": "疎通 → クエリ → Top5 / トークン削減",
+      "tag": "INSTRUCTIONS.md",
+      "width": 220
+    }
+  ],
+  "edges": [
+    { "from": "deploy_api", "to": "deploy_kong", "role": "main" },
+    { "from": "deploy_kong", "to": "define_mcp", "role": "main" },
+    { "from": "define_mcp", "to": "verify_demo", "role": "main" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "参照ドキュメント",
+      "items": [
+        "STEP 1 の詳細手順: deploy/README.md",
+        "STEP 4 の検証手順: INSTRUCTIONS.md"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "人手介在ステップ",
+      "items": [
+        "STEP 3 のみ Konnect UI 上で Shinichi が確認しながら手動実施",
+        "STEP 1・2・4 はエージェント/自動化で実行可能な工程"
+      ]
+    }
+  ]
+}

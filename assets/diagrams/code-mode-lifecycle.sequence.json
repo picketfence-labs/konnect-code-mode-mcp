@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "MCP Server ライフサイクル（作成 → 稼働）",
+    "subtitle": "前提: Konnect CP 同期後、Kong Operator は signal long-poll を開始済み",
+    "output": "code-mode-lifecycle.html",
+    "viewBox": [1450, 560],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "request-and-signal", "label": "作成要求と signal 解除", "focus": ["user", "cp", "op"], "note": "User の作成指示が CP 経由で Operator の long-poll を解除する。" },
+      { "id": "infra-provisioning", "label": "エンティティ取得とインフラ生成", "focus": ["op", "cp", "k8s", "pod"], "note": "Operator が Kong エンティティ仕様を取得し、K8s 上に実リソースと Pod を生成する。" },
+      { "id": "code-startup-and-report", "label": "コード取得・起動・報告", "focus": ["pod", "cp", "op"], "note": "init-container がコードを取得し、main-container 起動後に health が Operator/CP へ伝わる。" }
+    ]
+  },
+  "participants": [
+    { "id": "user", "type": "external", "label": "Konnect UI (ユーザー)" },
+    { "id": "cp", "type": "cloud", "label": "Konnect CP" },
+    { "id": "op", "type": "backend", "label": "Kong Operator" },
+    { "id": "k8s", "type": "backend", "label": "Kubernetes" },
+    { "id": "pod", "type": "backend", "label": "MCP Server Pod" }
+  ],
+  "segments": [
+    { "from": 150, "to": 279, "label": "作成要求 & signal 解除" },
+    { "from": 279, "to": 339, "label": "エンティティ取得 & インフラ生成" },
+    { "from": 339, "to": 470, "label": "コード取得・起動・報告" }
+  ],
+  "messages": [
+    { "id": "create-request", "from": "user", "to": "cp", "y": 166, "label": "MCP サーバー作成", "variant": "emphasis" },
+    { "id": "longpoll-release", "from": "cp", "to": "op", "y": 196, "label": "long-poll 解除 (signal)", "variant": "dashed" },
+    { "id": "get-entities", "from": "op", "to": "cp", "y": 226, "label": "GetMCPServerKongEntities", "variant": "default", "note": "直前に Operator 内部で MCPServer CR を作成" },
+    { "id": "entities-spec", "from": "cp", "to": "op", "y": 264, "label": "KongService / KongRoute spec", "variant": "return" },
+    { "id": "create-k8s-resources", "from": "op", "to": "k8s", "y": 294, "label": "KongService/KongRoute CR, Service, Deployment 生成", "variant": "emphasis" },
+    { "id": "pod-start", "from": "k8s", "to": "pod", "y": 324, "label": "Pod 起動 (init + main container)", "variant": "emphasis" },
+    { "id": "fetch-code", "from": "pod", "to": "cp", "y": 354, "label": "init-container が /code を取得 (PAT/mTLS, backoff)", "variant": "security" },
+    { "id": "deliver-code", "from": "cp", "to": "pod", "y": 384, "label": "生成 Python 配布 (py_compile 検証 → 共有 EmptyDir)", "variant": "return" },
+    { "id": "health-report", "from": "pod", "to": "op", "y": 414, "label": "K8s probe で health 報告", "variant": "dashed", "note": "直前に Pod 内部で main-container が python app.py を起動 (:8080)" },
+    { "id": "runtime-status", "from": "op", "to": "cp", "y": 452, "label": "runtime status 報告", "variant": "dashed" }
+  ],
+  "activations": [
+    { "participant": "cp", "from": 156, "to": 190, "type": "cloud" },
+    { "participant": "op", "from": 192, "to": 300, "type": "backend" },
+    { "participant": "cp", "from": 216, "to": 260, "type": "cloud" },
+    { "participant": "k8s", "from": 288, "to": 330, "type": "backend" },
+    { "participant": "pod", "from": 318, "to": 424, "type": "backend" },
+    { "participant": "cp", "from": 344, "to": 394, "type": "cloud" },
+    { "participant": "cp", "from": 448, "to": 460, "type": "cloud" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Signal 駆動の起動", "items": ["CP 同期後、Operator は signal long-poll を開始した状態で待機する", "User の作成指示が CP 経由で signal 解除のトリガーになる", "Operator は CP へ問い合わせる前に MCPServer CR を内部で作成する"] },
+    { "dot": "violet", "title": "インフラのプロビジョニング", "items": ["Operator が KongService/KongRoute の spec を取得し、K8s 上に CR・Service・Deployment を生成する", "Kubernetes が Pod を起動し、init/main の2コンテナ構成で立ち上がる"] },
+    { "dot": "emerald", "title": "コード取得と稼働報告", "items": ["init-container は PAT/mTLS 認証と backoff 付きで /code を取得する", "CP は生成 Python を py_compile 検証後に共有 EmptyDir へ渡す", "main-container が python app.py を起動し (:8080)、K8s probe 経由で health が Operator・CP へ報告される"] }
+  ]
+}

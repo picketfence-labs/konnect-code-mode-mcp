@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Code Mode の動作: サンドボックス境界でのデータ量非対称性",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "outbound",
+        "label": "実行リクエスト経路",
+        "focus": ["llm", "code", "tool", "api"],
+        "note": "LLMがコードのexecuteを渡してからUpstream APIに到達するまで"
+      },
+      {
+        "id": "boundary-crossing",
+        "label": "データ量の非対称性",
+        "focus": ["api", "tool", "code", "llm"],
+        "note": "1万件の生データはサンドボックス境界内に留まり、LLMには上位5件だけが返る"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "outside", "label": "サンドボックス外" },
+    { "id": "sandbox", "label": "サンドボックス内" }
+  ],
+  "groups": [
+    { "id": "sandbox_boundary", "label": "MontySandboxProvider", "lane": "sandbox", "fromCol": 2, "toCol": 2, "variant": "emphasis" }
+  ],
+  "mainPath": ["llm", "code", "tool", "api"],
+  "semanticChecks": {
+    "requiredEdges": [
+      { "from": "tool", "to": "api" },
+      { "from": "api", "to": "tool" },
+      { "from": "tool", "to": "code" },
+      { "from": "code", "to": "llm" }
+    ]
+  },
+  "nodes": [
+    { "id": "llm", "lane": "outside", "col": 0, "type": "external", "label": "AIエージェント", "sublabel": "LLM", "tag": "外部アクター" },
+    { "id": "code", "lane": "sandbox", "col": 2, "type": "backend", "label": "生成コード実行", "sublabel": "集計・整形処理", "tag": "Python" },
+    { "id": "tool", "lane": "outside", "col": 4, "type": "messagebus", "label": "ツール関数", "sublabel": "_GuardedSession", "tag": "HTTPフェッチ担当" },
+    { "id": "api", "lane": "outside", "col": 5, "type": "cloud", "label": "Upstream API", "sublabel": "外部データ提供元" }
+  ],
+  "edges": [
+    { "id": "execute-code", "from": "llm", "to": "code", "label": "Pythonコードをexecute", "variant": "default", "role": "main" },
+    { "id": "tool-call", "from": "code", "to": "tool", "label": "ツール呼び出し (external_functions)", "variant": "default", "role": "main" },
+    { "id": "http-get", "from": "tool", "to": "api", "label": "HTTP GET", "variant": "default", "role": "main" },
+    { "id": "raw-response", "from": "api", "to": "tool", "label": "1万件 (raw)", "variant": "emphasis", "role": "return", "width": 3 },
+    { "id": "into-sandbox", "from": "tool", "to": "code", "label": "1万件 → サンドボックス内へ", "variant": "emphasis", "role": "return", "width": 3 },
+    { "id": "top5-reply", "from": "code", "to": "llm", "label": "上位5件のみ", "variant": "default", "role": "return", "width": 1 }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "データ量の非対称性",
+      "items": [
+        "Upstream APIが返すのは1万件の生データ",
+        "1万件はツール層とサンドボックス内だけを往復し、太い線で強調",
+        "サンドボックス境界を越えてLLMに返るのは上位5件のみ、細い線で対比"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "境界の設計",
+      "items": [
+        "HTTPフェッチはサンドボックス外のツール層(_GuardedSession)が担当",
+        "結果はPythonオブジェクトとしてのみサンドボックス内のコードへ渡る",
+        "LLMはexecute要求とtop5の結果しか見えず、1万件はLLMコンテキストに一切入らない"
+      ]
+    }
+  ]
+}

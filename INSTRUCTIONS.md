@@ -11,20 +11,9 @@ Kong Konnect の **Context Mesh / Code Mode** デモの**デプロイ後の検�
 
 ## 検証の全体像
 
-```mermaid
-flowchart LR
-  AGENT["AI エージェント<br/>(MCP クライアント / Claude Code)"]
-  subgraph K8s["Minikube (ローカル Data Plane)"]
-    DP["Kong DP (hybrid)"]
-    MCP["生成 MCP サーバー<br/>(FastMCP + CodeMode)"]
-    API["mock-api<br/>(気温 12,000 件)"]
-  end
-  AGENT -->|"データ加工要件を含むリクエスト"| DP
-  DP --> MCP
-  MCP -->|"サンドボックス内でツール呼び出し + 集計"| API
-  API -->|"12,000 件 (raw)"| MCP
-  MCP -->|"Top5 だけ"| DP --> AGENT
-```
+[![検証環境の全体像（Minikube デプロイ後・Kong DP 経由）](assets/diagrams/instructions-verification-overview.png)](https://picketfence-labs.github.io/diagrams/3f05a8bf9c35/)
+
+*（画像クリックでインタラクティブ版を開く）*
 
 ---
 

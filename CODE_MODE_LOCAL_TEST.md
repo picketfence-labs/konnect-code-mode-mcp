@@ -97,19 +97,9 @@ return [{"city": r["city"], "avg_temp": round(r["avg_temp"], 1)} for r in top5]
 
 ## 2. 全体像
 
-```mermaid
-flowchart LR
-  subgraph LOCAL["ローカル PC"]
-    CLIENT["MCP クライアント<br/>(Claude Code など)"]
-    MCP["生成 MCP サーバー<br/>app.py (FastMCP + CodeMode)<br/>:8080"]
-    API["モック API (FastAPI) :8000<br/>/cities (100)<br/>/temperatures?city_id (120/都市)"]
-  end
-  CLIENT -->|"execute (Python コード)"| MCP
-  MCP -->|"listCities() = 1 回"| API
-  MCP -->|"getTemperatures(city_id) = 100 回"| API
-  API -->|"合計 12,000 件 (raw)"| MCP
-  MCP -->|"上位 5 件のみ"| CLIENT
-```
+[![ローカル PC 単体での Code Mode 検証環境](assets/diagrams/local-test-overview.png)](https://picketfence-labs.github.io/diagrams/ab06b45edc33/)
+
+*（画像クリックでインタラクティブ版を開く）*
 
 ---
 
