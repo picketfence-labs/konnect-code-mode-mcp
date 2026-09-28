@@ -1,0 +1,426 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "申込サービス (Application Service)",
+    "description": "保険の申込を管理するAPI。審査ステータス(審査中/承認/却下/取消)と、承認時の契約IDを保持します。\n\nデモ用に bundle v0.1.1 から必要な操作だけを抽出した仕様です。",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/applications": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "申込一覧の取得",
+        "operationId": "list_applications_applications_get",
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "顧客IDで絞り込み",
+              "title": "Customer Id",
+              "nullable": true
+            },
+            "description": "顧客IDで絞り込み"
+          },
+          {
+            "name": "product_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "商品IDで絞り込み",
+              "title": "Product Id",
+              "nullable": true
+            },
+            "description": "商品IDで絞り込み"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "ステータスで絞り込み",
+              "title": "Status",
+              "nullable": true
+            },
+            "description": "ステータスで絞り込み"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/applications/{application_id}": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "申込の取得",
+        "operationId": "get_application_applications__application_id__get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Application": {
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "title": "Customer Id",
+            "description": "申込者(顧客ID)",
+            "example": "CUS-000001"
+          },
+          "product_id": {
+            "type": "string",
+            "title": "Product Id",
+            "description": "申込商品(商品ID)",
+            "example": "PRD-001"
+          },
+          "application_date": {
+            "type": "string",
+            "title": "Application Date",
+            "description": "申込日(YYYY-MM-DD)"
+          },
+          "desired_sum_insured": {
+            "type": "integer",
+            "title": "Desired Sum Insured",
+            "description": "希望保険金額(円)"
+          },
+          "desired_payment_period": {
+            "type": "string",
+            "title": "Desired Payment Period",
+            "description": "希望払込期間"
+          },
+          "payment_method": {
+            "type": "string",
+            "title": "Payment Method",
+            "description": "支払方法",
+            "example": "口座振替"
+          },
+          "health_declaration": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HealthDeclaration"
+              }
+            ],
+            "description": "告知内容(医療・傷害保険のみ)",
+            "nullable": true
+          },
+          "beneficiary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Beneficiary"
+              }
+            ],
+            "description": "受取人(傷害保険の死亡保障のみ)",
+            "nullable": true
+          },
+          "insured_pet": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InsuredPet"
+              }
+            ],
+            "description": "被保険動物(ペット保険のみ)",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "審査ステータス",
+            "example": "承認"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "title": "Reviewed At",
+            "description": "審査完了日時",
+            "nullable": true
+          },
+          "rejection_reason": {
+            "type": "string",
+            "title": "Rejection Reason",
+            "description": "却下理由(却下時のみ)",
+            "nullable": true
+          },
+          "resulting_policy_id": {
+            "type": "string",
+            "title": "Resulting Policy Id",
+            "description": "契約化された場合の契約ID",
+            "nullable": true
+          },
+          "application_id": {
+            "type": "string",
+            "title": "Application Id",
+            "description": "申込ID(APP-NNNNNN)",
+            "example": "APP-000001"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "customer_id",
+          "product_id",
+          "application_date",
+          "desired_sum_insured",
+          "desired_payment_period",
+          "payment_method",
+          "status",
+          "application_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Application"
+      },
+      "ApplicationList": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Application"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "items"
+        ],
+        "title": "ApplicationList"
+      },
+      "Beneficiary": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "受取人氏名"
+          },
+          "relationship": {
+            "type": "string",
+            "title": "Relationship",
+            "description": "続柄",
+            "example": "配偶者"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "relationship"
+        ],
+        "title": "Beneficiary"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthDeclaration": {
+        "properties": {
+          "has_pre_existing_condition": {
+            "type": "boolean",
+            "title": "Has Pre Existing Condition",
+            "description": "既往症の有無"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "description": "告知の補足",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "has_pre_existing_condition"
+        ],
+        "title": "HealthDeclaration"
+      },
+      "InsuredPet": {
+        "properties": {
+          "species": {
+            "type": "string",
+            "title": "Species",
+            "description": "種別",
+            "example": "犬"
+          },
+          "breed": {
+            "type": "string",
+            "title": "Breed",
+            "description": "品種",
+            "example": "トイプードル"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "ペットの名前",
+            "example": "ポチ"
+          },
+          "age": {
+            "type": "integer",
+            "title": "Age",
+            "description": "ペットの年齢"
+          }
+        },
+        "type": "object",
+        "required": [
+          "species",
+          "breed",
+          "name",
+          "age"
+        ],
+        "title": "InsuredPet"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "applications",
+      "description": "申込の参照・管理"
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://application.insurance.svc.cluster.local:8000",
+      "description": "Insurance API サービスへのクラスタ内接続先です。"
+    }
+  ]
+}

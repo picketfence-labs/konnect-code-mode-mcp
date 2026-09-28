@@ -1,0 +1,237 @@
+# Insurance bundle の k8s/services/services.yaml を基にした固定コピーです。
+# イメージタグは v0.1.1 に固定し、既存 insurance namespace のサービスを再現します。
+# 更新は bundle の変更を確認した PR で明示的に取り込みます。
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product
+  namespace: insurance
+  labels: { app: product }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: product } }
+  template:
+    metadata:
+      labels: { app: product }
+    spec:
+      containers:
+        - name: product
+          image: ghcr.io/picketfence-labs/insurance-product:v0.1.1
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8000 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "250m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product
+  namespace: insurance
+spec:
+  selector: { app: product }
+  ports: [{ port: 8000, targetPort: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer
+  namespace: insurance
+  labels: { app: customer }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: customer } }
+  template:
+    metadata:
+      labels: { app: customer }
+    spec:
+      containers:
+        - name: customer
+          image: ghcr.io/picketfence-labs/insurance-customer:v0.1.1
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8000 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "250m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer
+  namespace: insurance
+spec:
+  selector: { app: customer }
+  ports: [{ port: 8000, targetPort: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simulation
+  namespace: insurance
+  labels: { app: simulation }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: simulation } }
+  template:
+    metadata:
+      labels: { app: simulation }
+    spec:
+      containers:
+        - name: simulation
+          image: ghcr.io/picketfence-labs/insurance-simulation:v0.1.1
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8000 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "250m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: simulation
+  namespace: insurance
+spec:
+  selector: { app: simulation }
+  ports: [{ port: 8000, targetPort: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: application
+  namespace: insurance
+  labels: { app: application }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: application } }
+  template:
+    metadata:
+      labels: { app: application }
+    spec:
+      containers:
+        - name: application
+          image: ghcr.io/picketfence-labs/insurance-application:v0.1.1
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8000 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "250m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: application
+  namespace: insurance
+spec:
+  selector: { app: application }
+  ports: [{ port: 8000, targetPort: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: policy
+  namespace: insurance
+  labels: { app: policy }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: policy } }
+  template:
+    metadata:
+      labels: { app: policy }
+    spec:
+      containers:
+        - name: policy
+          image: ghcr.io/picketfence-labs/insurance-policy:v0.1.1
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8000 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "250m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: policy
+  namespace: insurance
+spec:
+  selector: { app: policy }
+  ports: [{ port: 8000, targetPort: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claim
+  namespace: insurance
+  labels: { app: claim }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: claim } }
+  template:
+    metadata:
+      labels: { app: claim }
+    spec:
+      containers:
+        - name: claim
+          image: ghcr.io/picketfence-labs/insurance-claim:v0.1.1
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8000 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "250m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: claim
+  namespace: insurance
+spec:
+  selector: { app: claim }
+  ports: [{ port: 8000, targetPort: 8000 }]
