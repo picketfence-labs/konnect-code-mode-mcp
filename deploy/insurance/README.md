@@ -28,17 +28,33 @@ kubectl -n insurance port-forward svc/product 8000:8000
 curl http://localhost:8000/health
 ```
 
-## OpenAPI 仕様の再生成
+## Context Mesh に登録する OpenAPI 仕様
 
-読み取り専用の参照元 `kong-api-bundle-insurance` のルートを指定します。スクリプトは Python 3
-標準ライブラリと `yq` CLI を使い、6つの Source 用 JSON を生成します。
+このデモでは、bundle の OpenAPI 仕様（OpenAPI 3.1.0）を**そのまま**登録します。変更するのは
+上流 URL（`servers`）だけです。bundle の `servers` は例示用のドメイン
+（`https://api.example.com/<svc>`）なので、クラスタ内の Service DNS に置き換えます。
+手元の OpenAPI 仕様をそのまま登録するだけで MCP Server 化できることが、このデモで示したい点です
+（[ADR-0008](../../docs/decisions/0008-insurance-integration.md)）。
+
+| Source 名（例） | bundle の仕様（v0.1.1） | 上流 URL | 操作数 |
+|---|---|---|---:|
+| `product-service` | [`services/product/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/product/openapi.yaml) | `http://product.insurance.svc.cluster.local:8000` | 6 |
+| `customer-service` | [`services/customer/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/customer/openapi.yaml) | `http://customer.insurance.svc.cluster.local:8000` | 6 |
+| `simulation-service` | [`services/simulation/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/simulation/openapi.yaml) | `http://simulation.insurance.svc.cluster.local:8000` | 2 |
+| `application-service` | [`services/application/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/application/openapi.yaml) | `http://application.insurance.svc.cluster.local:8000` | 6 |
+| `policy-service` | [`services/policy/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/policy/openapi.yaml) | `http://policy.insurance.svc.cluster.local:8000` | 6 |
+| `claim-service` | [`services/claim/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/claim/openapi.yaml) | `http://claim.insurance.svc.cluster.local:8000` | 6 |
+
+Konnect UI で上流 URL を指定できない場合は、`servers` だけを置き換えた仕様を `yq` で作って
+貼り付けます（repo にはコピーを置きません）。
 
 ```bash
-python3 scripts/build_insurance_specs.py --bundle-root /path/to/kong-api-bundle-insurance
-python3 scripts/build_insurance_specs.py --check --bundle-root /path/to/kong-api-bundle-insurance
+BUNDLE=https://raw.githubusercontent.com/picketfence-labs/kong-api-bundle-insurance/v0.1.1
+svc=product   # customer / simulation / application / policy / claim
+curl -s "$BUNDLE/services/$svc/openapi.yaml" \
+  | yq ".servers = [{\"url\": \"http://$svc.insurance.svc.cluster.local:8000\"}]" \
+  | pbcopy
 ```
-
-bundle の更新は自動追従せず、変更内容を確認した PR で仕様と必要な manifest を明示的に更新します。
 
 ## Konnect UI への登録
 
@@ -46,30 +62,37 @@ bundle の更新は自動追従せず、変更内容を確認した PR で仕様
 の登録 → Data Plane の選択）で行う登録手順です。
 
 1. Konnect UI の **Context Mesh** で **MCP Server** を新規作成し、名前を `kong-insurance` にします。
-2. 接続先の API として、次の6つの API Source を一つずつ登録します。各 Source に対応する
-   JSON ファイルの内容を UI の OpenAPI 入力欄へ貼り付けます。
-
-| Source 名 | ファイル | 操作数 |
-|---|---|---:|
-| `insurance-product` | `insurance/openapi/product.json` | 2 |
-| `insurance-customer` | `insurance/openapi/customer.json` | 2 |
-| `insurance-simulation` | `insurance/openapi/simulation.json` | 1 |
-| `insurance-application` | `insurance/openapi/application.json` | 2 |
-| `insurance-policy` | `insurance/openapi/policy.json` | 2 |
-| `insurance-claim` | `insurance/openapi/claim.json` | 2 |
-
+2. 接続先の API として、上の表の6つの API Source を一つずつ登録します。bundle の仕様を貼り付け、
+   上流 URL をクラスタ内の Service DNS にします。
 3. Data Plane には、World Weather MCP Server と同じ既存の Data Plane を選択します。新しい
    Control Plane は作成しません。
 4. 保存後、MCP Server の概要画面で状態とツール一覧を確認します。
 
-### 登録後に記録する項目
+MCP URL は `http://127.0.0.1/mcp/kong-insurance` です（`minikube tunnel` 経由）。
 
-- MCP URL
-- `tools/list` に表示されたツール名
-- Source ごとの操作数: 2 / 2 / 1 / 2 / 2 / 2（合計11）
+### 登録後に確認・記録する項目
+
+- `tools/list` に表示されるのは `list_tools` / `search` / `get_schema` / `execute` の4つ
+- `list_tools` で見える API の Tool は**32個**（Source ごとに 6 / 6 / 2 / 6 / 6 / 6）。
+  Tool 名は `<Source名>_<operationId>` の形で、Source 名の `-` は `_dash_` に置き換わる
+  （例: `product_dash_service_list_products_products_get`）
 - MCP Server の health status
-- いずれかの list 呼び出しの応答形。`{total, items}` を返し、`skip` / `limit` でページングする。
-  `limit` の最大値は100。
+- list 系の Tool は `{total, items}` を返し、`skip` / `limit` でページングする（`limit` の最大値は100）
 
-顧客データは架空ですが、マイナンバーに似た値を含みます。デモ回答に個別の顧客行を出力しないで
-ください。
+## 注意事項
+
+- **書き込み系の操作も公開されます。** bundle の仕様をそのまま登録するため、各 API の登録・更新・
+  削除（POST / PUT / DELETE）も Tool になります。デモでは Chat UI の指示で参照と試算だけに
+  限定します。データは各 Pod のメモリに保持されているので、書き換わった場合は再起動すると
+  seed の状態に戻ります。
+
+  ```bash
+  kubectl -n insurance rollout restart deploy
+  ```
+
+- 顧客データは架空ですが、マイナンバーに似た値を含みます。デモ回答に個別の顧客行を出力しないで
+  ください。
+- Code Mode の `execute` で動く Python では `import` が使えません。集計は組み込みの機能だけで
+  書きます。
+- `search` は日本語のクエリではヒットしません（2026-09-28 時点の観測）。Tool 名に含まれる英単語で
+  検索します。

@@ -29,15 +29,15 @@ namespace ですでに稼働している（イメージ `v0.1.1`）。既存の 
 既存の Kubernetes Service 名と DNS（`<svc>.insurance.svc.cluster.local:8000`）を利用する。
 
 Context Mesh には6つの Source を登録し、一つの MCP Server `kong-insurance` から公開する。
-Source ごとの操作は、product / customer / application / policy / claim が各2件、simulation
-が1件の合計11件とする。CRUD API は読み取り操作だけを残し、simulation はステートレスな
-試算 POST のみを残す。デモに必要な検索と試算を示しつつ、顧客・契約データを書き換えない範囲に
-絞るためである。
+各 Source には **bundle の OpenAPI 仕様（v0.1.1、OpenAPI 3.1.0）をそのまま**登録し、変更するのは
+上流 URL（`servers`）だけとする。bundle の `servers` は例示用のドメイン（`https://api.example.com/<svc>`）
+なので、`http://<svc>.insurance.svc.cluster.local:8000` に置き換える。「手元の OpenAPI 仕様を
+そのまま登録するだけで MCP Server 化できる」ことが、このデモで示したい価値だからである。
+本 repo には仕様のコピーを置かず、bundle の v0.1.1 タグを参照する。
 
-bundle の OpenAPI 3.1.0 を Context Mesh 用の 3.0.3 に変換する。null union は `nullable: true`
-へ、schema `examples` は `example` へ、`const` は単一値 `enum` へ変換し、3.0.3 と無関係な
-schema marker を除く。変換ルールと操作許可リストは `scripts/build_insurance_specs.py` に置き、
-bundle の更新は内容を確認した明示的な PR でスクリプトを再実行して取り込む。
+操作は絞り込まず、書き込み系（POST / PUT / DELETE）と `/health` も含めた32操作を公開する。
+書き込み系は Chat UI の指示で使わせないようにし、データが書き換わった場合は Pod を再起動して
+seed に戻す（各サービスはデータをプロセス内のメモリに保持している）。
 
 将来は Issue #20 で、一つの Chat UI から World Weather と Insurance の両 MCP Server に接続する。
 
@@ -46,12 +46,19 @@ bundle の更新は内容を確認した明示的な PR でスクリプトを再
 - すでに稼働しているサービスをそのまま使うことで、不要な Pod や Gateway を作らずに済む。
 - 固定コピーとタグ固定により、fresh clone でも同じマニフェストを適用でき、現在のクラスタへ
   適用した場合も同一のオブジェクトになる。
-- OpenAPI をソースから再生成できるため、手編集による source と登録用仕様のずれを抑えられる。
+- OpenAPI 仕様は `servers` 以外を変えないので、元の仕様と登録内容がずれない。Context Mesh は
+  OpenAPI 3.1.0 をそのまま受け付ける（2026-09-28、bundle の仕様で32操作が Tool 化されることを確認）。
+- 当初は「3.0.3 へ変換し、読み取りと試算の11操作に絞る」案を採った（World Weather の仕様が
+  3.0.3 だったことからの推測）。しかし 3.1.0 が受け付けられることを確認し、デモの価値を優先して
+  上記に改めた（同日）。
 
 ## 影響・トレードオフ
 
-- Insurance サービスの更新は自動追従しない。bundle の変更を確認し、manifest と仕様を更新する
-  PR が必要となる。
+- Insurance サービスの更新は自動追従しない。bundle の変更を確認し、manifest と参照するタグを
+  更新する PR が必要となる。
+- 書き込み系の操作も LLM から呼べる。Chat UI の指示で抑止するが、保証ではない。データが
+  書き換わった場合は `kubectl -n insurance rollout restart deploy` で seed に戻す。
+- 公開する Tool が増える（32個）ため、Search Tool で必要な Tool を探す場面がより明確になる。
 - 顧客データは架空だが、マイナンバーに似た値を含む。デモ回答では個別の顧客行を表示しない。
 - Konnect UI への Source / MCP Server 登録は手動で行い、登録後の URL とツール一覧を記録する。
 
