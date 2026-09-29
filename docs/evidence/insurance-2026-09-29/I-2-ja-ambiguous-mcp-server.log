@@ -1,0 +1,80 @@
+# execute 1/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
+2026-09-29T06:48:28.564056000Z ============================================================
+2026-09-29T06:48:28.564061667Z CODE MODE — Generated Python:
+2026-09-29T06:48:28.564065167Z ============================================================
+2026-09-29T06:48:28.564067167Z async def get_samples():
+2026-09-29T06:48:28.564068750Z     claims = await call_tool('property_dash_insurance_dash_claim_dash_api_list_claims_claims_get', {'limit': 1})
+2026-09-29T06:48:28.564070583Z     policies = await call_tool('property_dash_insurance_dash_policy_dash_api_list_policies_policies_get', {'limit': 1})
+2026-09-29T06:48:28.564072333Z     products = await call_tool('property_dash_insurance_dash_product_dash_api_list_products_products_get', {'limit': 1})
+2026-09-29T06:48:28.564074042Z     return {
+2026-09-29T06:48:28.564075500Z         'claim_sample': claims.get('items', [])[0] if claims.get('items') else None,
+2026-09-29T06:48:28.564077250Z         'policy_sample': policies.get('items', [])[0] if policies.get('items') else None,
+2026-09-29T06:48:28.564079125Z         'product_sample': products.get('items', [])[0] if products.get('items') else None,
+2026-09-29T06:48:28.564080833Z     }
+2026-09-29T06:48:28.564105958Z 
+2026-09-29T06:48:28.564107542Z return await get_samples()
+2026-09-29T06:48:28.564108833Z ============================================================
+2026-09-29T06:48:28.564110125Z Available tools: ['call_tool']
+2026-09-29T06:48:28.564113958Z Result: {'claim_sample': {'policy_id': 'POL-000124', 'customer_id': 'CUS-000024', 'claim_type': '入院', 'incident_date': '2025-06-03', 'claim_date': '2025-06-07', 'claim_amount_requested': 222000, 'claim_amount_paid': None, 'status': '審査中', 'description': '医療保険「メディカルサポート」にかかる入院の請求', 'processed_at': None, 'claim_id': 'CLM-000001', 'created_at': '2025-06-07T09:00:00+09:00', 'updated_at': '2025-06-07T09:00:00+09:00'}, 'policy_sample': {'policy_number': '2021-MED-000001', 'application_id': 'APP-000168', 'customer_id': 'CUS-000049', 'product_id': 'PRD-004', 'contract_date': '2021-05-04', 'effective_date': '2021-05-04', 'expiry_date': '2027-05-04', 'sum_insured': 4500000, 'premium_amount': 4750, 'premium_payment_cycle': '月払', 'payment_method': '口座振替', 'status': '有効', 'beneficiary': None, 'insured_pet': None, 'riders': ['先進医療特約', 'がん診断給付特約'], 'policy_id': 'POL-000001', 'created_at': '2021-05-04T10:00:00+09:00', 'updated_at': '2021-05-04T10:00:00+09:00'}, 'product_sample': {'product_code': 'FIRE-STD', 'product_name': '火災保険「住まいの安心」', 'category': '火災保険', 'description': '戸建て・マンションを対象に、火災・落雷・風災・水災などの損害を補償する住まいの保険です。', 'coverage_summary': '火災・落雷・風災・水災', 'min_age': 18, 'max_age': 99, 'policy_term': '1〜5年', 'min_sum_insured': 10000000, 'max_sum_insured': 50000000, 'premium_rate_table': {'annual_rate_on_sum_insured': 0.0007, 'annual_base_premium': 0, 'note': '年齢係数はsimulationサービスの共通計算ロジックを参照'}, 'riders': ['地震保険特約', '個人賠償責任特約'], 'status': '販売中', 'product_id': 'PRD-001', 'created_at': '2024-04-01T09:00:00+09:00', 'updated_at': '2024-04-01T09:00:00+09:00'}}
+2026-09-29T06:48:28.564121250Z ============================================================
+2026-09-29T06:48:28.564122542Z 
+2026-09-29T06:48:28.564123625Z INFO:     10.244.1.64:34382 - "POST /mcp HTTP/1.1" 200 OK
+# execute 2/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
+2026-09-29T06:49:35.600772878Z ============================================================
+2026-09-29T06:49:35.600782587Z CODE MODE — Generated Python:
+2026-09-29T06:49:35.600785337Z ============================================================
+2026-09-29T06:49:35.600786462Z async def fetch_all(tool_name):
+2026-09-29T06:49:35.600787295Z     items = []
+2026-09-29T06:49:35.600788087Z     skip = 0
+2026-09-29T06:49:35.600788837Z     limit = 100
+2026-09-29T06:49:35.600789587Z     while True:
+2026-09-29T06:49:35.600790337Z         res = await call_tool(tool_name, {'skip': skip, 'limit': limit})
+2026-09-29T06:49:35.600791212Z         items.extend(res.get('items', []))
+2026-09-29T06:49:35.600801503Z         total = res.get('total', 0)
+2026-09-29T06:49:35.600802628Z         if len(items) >= total or not res.get('items'):
+2026-09-29T06:49:35.600831712Z             break
+2026-09-29T06:49:35.600833503Z         skip += limit
+2026-09-29T06:49:35.600834128Z     return items
+2026-09-29T06:49:35.600834753Z 
+2026-09-29T06:49:35.600835337Z async def main():
+2026-09-29T06:49:35.600835962Z     claims = await fetch_all('property_dash_insurance_dash_claim_dash_api_list_claims_claims_get')
+2026-09-29T06:49:35.600836712Z     policies = await fetch_all('property_dash_insurance_dash_policy_dash_api_list_policies_policies_get')
+2026-09-29T06:49:35.600837503Z     products = await fetch_all('property_dash_insurance_dash_product_dash_api_list_products_products_get')
+2026-09-29T06:49:35.600838212Z     
+2026-09-29T06:49:35.600838837Z     prod_map = {p['product_id']: p['product_name'] for p in products}
+2026-09-29T06:49:35.600839503Z     policy_map = {pol['policy_id']: pol['product_id'] for pol in policies}
+2026-09-29T06:49:35.600840170Z     
+2026-09-29T06:49:35.600840795Z     product_totals = {}
+2026-09-29T06:49:35.600841420Z     for claim in claims:
+2026-09-29T06:49:35.600842003Z         paid_amt = claim.get('claim_amount_paid')
+2026-09-29T06:49:35.600842670Z         if paid_amt is not None and paid_amt > 0:
+2026-09-29T06:49:35.600843545Z             policy_id = claim.get('policy_id')
+2026-09-29T06:49:35.600846878Z             prod_id = policy_map.get(policy_id)
+2026-09-29T06:49:35.600847795Z             if prod_id:
+2026-09-29T06:49:35.600848545Z                 prod_name = prod_map.get(prod_id, prod_id)
+2026-09-29T06:49:35.600849337Z                 product_totals[prod_name] = product_totals.get(prod_name, 0) + paid_amt
+2026-09-29T06:49:35.600850253Z             else:
+2026-09-29T06:49:35.600850962Z                 product_totals['Unknown Policy'] = product_totals.get('Unknown Policy', 0) + paid_amt
+2026-09-29T06:49:35.600851878Z                 
+2026-09-29T06:49:35.600852587Z     sorted_totals = sorted(product_totals.items(), key=lambda x: x[1], reverse=True)
+2026-09-29T06:49:35.600853587Z     top_5 = sorted_totals[:5]
+2026-09-29T06:49:35.600854378Z     
+2026-09-29T06:49:35.600855087Z     return {
+2026-09-29T06:49:35.600855795Z         'top_5': [{'product_name': name, 'total_paid_amount': amt} for name, amt in top_5],
+2026-09-29T06:49:35.600856753Z         'total_claims_processed': len(claims),
+2026-09-29T06:49:35.600857628Z         'paid_claims_count': sum(1 for c in claims if c.get('claim_amount_paid') is not None and c.get('claim_amount_paid') > 0)
+2026-09-29T06:49:35.600858712Z     }
+2026-09-29T06:49:35.600859462Z 
+2026-09-29T06:49:35.600860170Z return await main()
+2026-09-29T06:49:35.600861920Z ============================================================
+2026-09-29T06:49:35.600866128Z Available tools: ['call_tool']
+2026-09-29T06:49:35.600872087Z Result: {'top_5': [{'product_name': '火災保険「住まいの安心」', 'total_paid_amount': 39563922}, {'product_name': '傷害保険「ケガの安心サポート」', 'total_paid_amount': 11654702}, {'product_name': '自動車保険「ドライブセーフ」', 'total_paid_amount': 5872134}, {'product_name': '医療保険「メディカルサポート」', 'total_paid_amount': 1250942}, {'product_name': 'ペット保険「わんにゃんメディカル」', 'total_paid_amount': 886584}], 'total_claims_processed': 50, 'paid_claims_count': 36}
+2026-09-29T06:49:35.600876462Z ============================================================
+2026-09-29T06:49:35.600888753Z 
+2026-09-29T06:49:35.600899087Z INFO:     10.244.1.64:42174 - "POST /mcp HTTP/1.1" 400 Bad Request
+2026-09-29T06:49:35.617781003Z INFO:     10.244.1.64:42174 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:49:35.733662253Z INFO:     10.244.1.64:42180 - "POST /mcp HTTP/1.1" 202 Accepted
+2026-09-29T06:49:35.789669128Z INFO:     10.244.1.64:42174 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:49:38.368899505Z INFO:     10.244.1.64:42174 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:49:41.242137131Z INFO:     10.244.1.64:42174 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:49:45.306195341Z INFO:     10.244.1.64:49648 - "POST /mcp HTTP/1.1" 200 OK

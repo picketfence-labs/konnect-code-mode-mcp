@@ -1,0 +1,9 @@
+2026-09-29T06:47:28.815982458Z [product] INFO:     10.244.1.70:58230 - "GET /products?limit=1 HTTP/1.1" 200 OK
+2026-09-29T06:47:28.826299583Z [application] INFO:     10.244.1.70:60978 - "GET /applications?limit=1 HTTP/1.1" 200 OK
+2026-09-29T06:47:28.834000500Z [policy] INFO:     10.244.1.70:55900 - "GET /policies?limit=1 HTTP/1.1" 200 OK
+2026-09-29T06:47:36.671789712Z [product] INFO:     10.244.1.70:46160 - "GET /products?limit=100 HTTP/1.1" 200 OK
+2026-09-29T06:47:36.680620545Z [application] INFO:     10.244.1.70:37252 - "GET /applications?skip=0&limit=100 HTTP/1.1" 200 OK
+2026-09-29T06:47:36.691609045Z [application] INFO:     10.244.1.70:37268 - "GET /applications?skip=100&limit=100 HTTP/1.1" 200 OK
+2026-09-29T06:47:36.699738670Z [application] INFO:     10.244.1.70:37278 - "GET /applications?skip=200&limit=100 HTTP/1.1" 200 OK
+2026-09-29T06:47:36.708038379Z [policy] INFO:     10.244.1.70:35672 - "GET /policies?skip=0&limit=100 HTTP/1.1" 200 OK
+2026-09-29T06:47:36.716145712Z [policy] INFO:     10.244.1.70:35684 - "GET /policies?skip=100&limit=100 HTTP/1.1" 200 OK

@@ -1,0 +1,107 @@
+# execute 1/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
+2026-09-29T06:47:36.665058212Z ============================================================
+2026-09-29T06:47:36.665059670Z CODE MODE — Generated Python:
+2026-09-29T06:47:36.665061587Z ============================================================
+2026-09-29T06:47:36.665062295Z async def test():
+2026-09-29T06:47:36.665063295Z     # 商品一覧
+2026-09-29T06:47:36.665064004Z     prod_res = await call_tool("property_dash_insurance_dash_product_dash_api_list_products_products_get", {"limit": 1})
+2026-09-29T06:47:36.665065004Z     # 申込一覧
+2026-09-29T06:47:36.665065629Z     app_res = await call_tool("property_dash_insurance_dash_application_dash_api_list_applications_applications_get", {"limit": 1})
+2026-09-29T06:47:36.665066504Z     # 契約一覧
+2026-09-29T06:47:36.665067129Z     pol_res = await call_tool("property_dash_insurance_dash_policy_dash_api_list_policies_policies_get", {"limit": 1})
+2026-09-29T06:47:36.665067879Z     return {
+2026-09-29T06:47:36.665068545Z         "prod_sample": prod_res.get("items", [])[0] if prod_res.get("items") else None,
+2026-09-29T06:47:36.665069420Z         "app_sample": app_res.get("items", [])[0] if app_res.get("items") else None,
+2026-09-29T06:47:36.665070504Z         "pol_sample": pol_res.get("items", [])[0] if pol_res.get("items") else None,
+2026-09-29T06:47:36.665071212Z         "prod_total": prod_res.get("total"),
+2026-09-29T06:47:36.665071920Z         "app_total": app_res.get("total"),
+2026-09-29T06:47:36.665072587Z         "pol_total": pol_res.get("total"),
+2026-09-29T06:47:36.665073254Z     }
+2026-09-29T06:47:36.665073879Z return await test()
+2026-09-29T06:47:36.665074504Z ============================================================
+2026-09-29T06:47:36.665075212Z Available tools: ['call_tool']
+2026-09-29T06:47:36.665077379Z Result: {'prod_sample': {'product_code': 'FIRE-STD', 'product_name': '火災保険「住まいの安心」', 'category': '火災保険', 'description': '戸建て・マンションを対象に、火災・落雷・風災・水災などの損害を補償する住まいの保険です。', 'coverage_summary': '火災・落雷・風災・水災', 'min_age': 18, 'max_age': 99, 'policy_term': '1〜5年', 'min_sum_insured': 10000000, 'max_sum_insured': 50000000, 'premium_rate_table': {'annual_rate_on_sum_insured': 0.0007, 'annual_base_premium': 0, 'note': '年齢係数はsimulationサービスの共通計算ロジックを参照'}, 'riders': ['地震保険特約', '個人賠償責任特約'], 'status': '販売中', 'product_id': 'PRD-001', 'created_at': '2024-04-01T09:00:00+09:00', 'updated_at': '2024-04-01T09:00:00+09:00'}, 'app_sample': {'customer_id': 'CUS-000030', 'product_id': 'PRD-004', 'application_date': '2022-03-06', 'desired_sum_insured': 2500000, 'desired_payment_period': '1年（自動更新）', 'payment_method': '口座振替', 'health_declaration': {'has_pre_existing_condition': False, 'notes': '特記事項なし'}, 'beneficiary': None, 'insured_pet': None, 'status': '審査中', 'reviewed_at': None, 'rejection_reason': None, 'resulting_policy_id': None, 'application_id': 'APP-000001', 'created_at': '2022-03-06T09:30:00+09:00', 'updated_at': '2022-03-06T09:30:00+09:00'}, 'pol_sample': {'policy_number': '2021-MED-000001', 'application_id': 'APP-000168', 'customer_id': 'CUS-000049', 'product_id': 'PRD-004', 'contract_date': '2021-05-04', 'effective_date': '2021-05-04', 'expiry_date': '2027-05-04', 'sum_insured': 4500000, 'premium_amount': 4750, 'premium_payment_cycle': '月払', 'payment_method': '口座振替', 'status': '有効', 'beneficiary': None, 'insured_pet': None, 'riders': ['先進医療特約', 'がん診断給付特約'], 'policy_id': 'POL-000001', 'created_at': '2021-05-04T10:00:00+09:00', 'updated_at': '2021-05-04T10:00:00+09:00'}, 'prod_total': 5, 'app_total': 300, 'pol_total': 200}
+2026-09-29T06:47:36.665105504Z ============================================================
+2026-09-29T06:47:36.665106420Z 
+2026-09-29T06:47:36.665107045Z INFO:     10.244.1.64:43526 - "POST /mcp HTTP/1.1" 200 OK
+# execute 2/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
+2026-09-29T06:48:10.941179756Z ============================================================
+2026-09-29T06:48:10.941185881Z CODE MODE — Generated Python:
+2026-09-29T06:48:10.941210214Z ============================================================
+2026-09-29T06:48:10.941212631Z async def aggregate():
+2026-09-29T06:48:10.941213797Z     prod_res = await call_tool("property_dash_insurance_dash_product_dash_api_list_products_products_get", {"limit": 100})
+2026-09-29T06:48:10.941215172Z     products = prod_res.get("items", [])
+2026-09-29T06:48:10.941216256Z     prod_map = {p["product_id"]: p["product_name"] for p in products}
+2026-09-29T06:48:10.941217464Z     
+2026-09-29T06:48:10.941218422Z     apps = []
+2026-09-29T06:48:10.941219297Z     skip = 0
+2026-09-29T06:48:10.941220047Z     limit = 100
+2026-09-29T06:48:10.941220797Z     while True:
+2026-09-29T06:48:10.941221589Z         res = await call_tool("property_dash_insurance_dash_application_dash_api_list_applications_applications_get", {"skip": skip, "limit": limit})
+2026-09-29T06:48:10.941222631Z         items = res.get("items", [])
+2026-09-29T06:48:10.941223464Z         if not items:
+2026-09-29T06:48:10.941224214Z             break
+2026-09-29T06:48:10.941225006Z         apps.extend(items)
+2026-09-29T06:48:10.941228381Z         if len(apps) >= res.get("total", 0):
+2026-09-29T06:48:10.941229964Z             break
+2026-09-29T06:48:10.941230714Z         skip += limit
+2026-09-29T06:48:10.941231506Z         
+2026-09-29T06:48:10.941236964Z     pols = []
+2026-09-29T06:48:10.941239339Z     skip = 0
+2026-09-29T06:48:10.941241464Z     limit = 100
+2026-09-29T06:48:10.941246131Z     while True:
+2026-09-29T06:48:10.941250172Z         res = await call_tool("property_dash_insurance_dash_policy_dash_api_list_policies_policies_get", {"skip": skip, "limit": limit})
+2026-09-29T06:48:10.941271797Z         items = res.get("items", [])
+2026-09-29T06:48:10.941288006Z         if not items:
+2026-09-29T06:48:10.941289797Z             break
+2026-09-29T06:48:10.941290464Z         pols.extend(items)
+2026-09-29T06:48:10.941291089Z         if len(pols) >= res.get("total", 0):
+2026-09-29T06:48:10.941291797Z             break
+2026-09-29T06:48:10.941292422Z         skip += limit
+2026-09-29T06:48:10.941293047Z 
+2026-09-29T06:48:10.941293672Z     app_counts = {}
+2026-09-29T06:48:10.941294256Z     pol_counts = {}
+2026-09-29T06:48:10.941294881Z     
+2026-09-29T06:48:10.941295506Z     for pid in prod_map:
+2026-09-29T06:48:10.941296131Z         app_counts[pid] = 0
+2026-09-29T06:48:10.941300506Z         pol_counts[pid] = 0
+2026-09-29T06:48:10.941302006Z         
+2026-09-29T06:48:10.941303631Z     for app in apps:
+2026-09-29T06:48:10.941307672Z         pid = app.get("product_id")
+2026-09-29T06:48:10.941312422Z         if pid in app_counts:
+2026-09-29T06:48:10.941316256Z             app_counts[pid] += 1
+2026-09-29T06:48:10.941320589Z             
+2026-09-29T06:48:10.941324172Z     for pol in pols:
+2026-09-29T06:48:10.941325006Z         pid = pol.get("product_id")
+2026-09-29T06:48:10.941325672Z         if pid in pol_counts:
+2026-09-29T06:48:10.941329714Z             pol_counts[pid] += 1
+2026-09-29T06:48:10.941333381Z             
+2026-09-29T06:48:10.941336547Z     results = []
+2026-09-29T06:48:10.941339797Z     for pid, pname in prod_map.items():
+2026-09-29T06:48:10.941340672Z         acount = app_counts[pid]
+2026-09-29T06:48:10.941342422Z         pcount = pol_counts[pid]
+2026-09-29T06:48:10.941345797Z         ratio = pcount / acount if acount > 0 else 0.0
+2026-09-29T06:48:10.941350131Z         results.append({
+2026-09-29T06:48:10.941353964Z             "product_id": pid,
+2026-09-29T06:48:10.941369964Z             "product_name": pname,
+2026-09-29T06:48:10.941373881Z             "application_count": acount,
+2026-09-29T06:48:10.941377297Z             "policy_count": pcount,
+2026-09-29T06:48:10.941382589Z             "success_rate": round(ratio * 100, 2)  # パーセント表記（小数点以下2桁）
+2026-09-29T06:48:10.941386714Z         })
+2026-09-29T06:48:10.941388381Z         
+2026-09-29T06:48:10.941390631Z     results_sorted = sorted(results, key=lambda x: x["success_rate"], reverse=True)
+2026-09-29T06:48:10.941395881Z     return results_sorted[:5]
+2026-09-29T06:48:10.941403381Z 
+2026-09-29T06:48:10.941416797Z return await aggregate()
+2026-09-29T06:48:10.941420881Z ============================================================
+2026-09-29T06:48:10.941424839Z Available tools: ['call_tool']
+2026-09-29T06:48:10.941429006Z Result: [{'product_id': 'PRD-002', 'product_name': '自動車保険「ドライブセーフ」', 'application_count': 54, 'policy_count': 40, 'success_rate': 74.07}, {'product_id': 'PRD-003', 'product_name': '傷害保険「ケガの安心サポート」', 'application_count': 59, 'policy_count': 41, 'success_rate': 69.49}, {'product_id': 'PRD-005', 'product_name': 'ペット保険「わんにゃんメディカル」', 'application_count': 68, 'policy_count': 46, 'success_rate': 67.65}, {'product_id': 'PRD-001', 'product_name': '火災保険「住まいの安心」', 'application_count': 71, 'policy_count': 45, 'success_rate': 63.38}, {'product_id': 'PRD-004', 'product_name': '医療保険「メディカルサポート」', 'application_count': 48, 'policy_count': 28, 'success_rate': 58.33}]
+2026-09-29T06:48:10.941438381Z ============================================================
+2026-09-29T06:48:10.941442297Z 
+2026-09-29T06:48:10.941446631Z INFO:     10.244.1.64:59234 - "POST /mcp HTTP/1.1" 400 Bad Request
+2026-09-29T06:48:10.951377714Z INFO:     10.244.1.64:59234 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:48:10.993162756Z INFO:     10.244.1.64:59234 - "POST /mcp HTTP/1.1" 202 Accepted
+2026-09-29T06:48:10.998737589Z INFO:     10.244.1.64:59236 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:48:13.298778507Z INFO:     10.244.1.64:59236 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:48:16.157673633Z INFO:     10.244.1.64:59236 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:48:20.736537219Z INFO:     10.244.1.64:59114 - "POST /mcp HTTP/1.1" 200 OK
