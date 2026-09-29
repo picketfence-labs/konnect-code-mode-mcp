@@ -1,5 +1,7 @@
 # Code Mode ローカル単体検証手順
 
+> English: [CODE_MODE_LOCAL_TEST.en.md](CODE_MODE_LOCAL_TEST.en.md)
+
 Konnect / Kubernetes を挟まず、ローカル PC 上だけで **Code Mode によるトークン削減**を
 検証する手順と、デモの具体設計。ここで確立した「モック API + 生成 MCP サーバー」は、
 そのまま次段階の Konnect Code Mode MCP 実証テストでも上流 API として再利用する。

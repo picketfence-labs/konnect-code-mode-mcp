@@ -1,5 +1,7 @@
 # Insurance API のデプロイと Context Mesh 登録
 
+> English: [README.en.md](README.en.md)
+
 ## これは何か
 
 このディレクトリには、すでに `insurance` namespace で稼働している6つの Insurance API を

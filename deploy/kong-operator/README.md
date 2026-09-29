@@ -1,5 +1,7 @@
 # Kong Operator + Konnect 接続 デプロイ手順
 
+> English: [README.en.md](README.en.md)
+
 Minikube 上に Kong Operator をインストールし、Konnect Control Plane / DataPlane を接続する手順。
 社内SE手順書（`Kong Operator Context Mesh - SE's.md`、Obsidian Vault管理）と
 `~/LOCAL_REPO/context-mesh`（reference clone、**変更禁止**）を起点としていた実運用手順を、

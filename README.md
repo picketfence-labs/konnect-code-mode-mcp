@@ -1,5 +1,8 @@
 # konnect-code-mode-mcp
 
+> English: [README.en.md](README.en.md)
+> 日本語版を正本とし、英語版は翻訳です。
+
 Kong Konnect の **Context Mesh** と **Code Mode** を使い、
 **AI エージェントの LLM トークン量削減**を実証するデモ環境ですKong Konnectを利用します。
 
