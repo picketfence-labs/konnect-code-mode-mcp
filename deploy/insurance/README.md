@@ -30,31 +30,27 @@ curl http://localhost:8000/health
 
 ## Context Mesh に登録する OpenAPI 仕様
 
-このデモでは、bundle の OpenAPI 仕様（OpenAPI 3.1.0）を**そのまま**登録します。変更するのは
-上流 URL（`servers`）だけです。bundle の `servers` は例示用のドメイン
-（`https://api.example.com/<svc>`）なので、クラスタ内の Service DNS に置き換えます。
-手元の OpenAPI 仕様をそのまま登録するだけで MCP Server 化できることが、このデモで示したい点です
-（[ADR-0008](../../docs/decisions/0008-insurance-integration.md)）。
+このデモでは、bundle の OpenAPI 仕様（v0.1.2、OpenAPI 3.1.0）を**そのまま**登録します。
+v0.1.2 から、各仕様の `servers` はクラスタ内の Service DNS（`http://<svc>.insurance.svc.cluster.local:8000`）
+になっているので、変更は不要です。手元の OpenAPI 仕様をそのまま登録するだけで MCP Server 化
+できることが、このデモで示したい点です（[ADR-0008](../../docs/decisions/0008-insurance-integration.md)）。
 
-| Source 名（例） | bundle の仕様（v0.1.1） | 上流 URL | 操作数 |
+| Source 名（例） | bundle の仕様（v0.1.2） | 上流 URL（仕様の `servers`） | 操作数 |
 |---|---|---|---:|
-| `product-service` | [`services/product/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/product/openapi.yaml) | `http://product.insurance.svc.cluster.local:8000` | 6 |
-| `customer-service` | [`services/customer/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/customer/openapi.yaml) | `http://customer.insurance.svc.cluster.local:8000` | 6 |
-| `simulation-service` | [`services/simulation/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/simulation/openapi.yaml) | `http://simulation.insurance.svc.cluster.local:8000` | 2 |
-| `application-service` | [`services/application/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/application/openapi.yaml) | `http://application.insurance.svc.cluster.local:8000` | 6 |
-| `policy-service` | [`services/policy/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/policy/openapi.yaml) | `http://policy.insurance.svc.cluster.local:8000` | 6 |
-| `claim-service` | [`services/claim/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.1/services/claim/openapi.yaml) | `http://claim.insurance.svc.cluster.local:8000` | 6 |
+| `product-service` | [`services/product/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.2/services/product/openapi.yaml) | `http://product.insurance.svc.cluster.local:8000` | 6 |
+| `customer-service` | [`services/customer/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.2/services/customer/openapi.yaml) | `http://customer.insurance.svc.cluster.local:8000` | 6 |
+| `simulation-service` | [`services/simulation/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.2/services/simulation/openapi.yaml) | `http://simulation.insurance.svc.cluster.local:8000` | 2 |
+| `application-service` | [`services/application/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.2/services/application/openapi.yaml) | `http://application.insurance.svc.cluster.local:8000` | 6 |
+| `policy-service` | [`services/policy/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.2/services/policy/openapi.yaml) | `http://policy.insurance.svc.cluster.local:8000` | 6 |
+| `claim-service` | [`services/claim/openapi.yaml`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.2/services/claim/openapi.yaml) | `http://claim.insurance.svc.cluster.local:8000` | 6 |
 
-Konnect UI で上流 URL を指定できない場合は、`servers` だけを置き換えた仕様を `yq` で作って
-貼り付けます（repo にはコピーを置きません）。
+v0.1.1 以前の仕様は `servers` が例示用のドメイン（`https://api.example.com/<svc>`）のままなので、
+登録すると `execute` が上流に届きません。bundle をローカルに clone している場合は、v0.1.2 以降を
+checkout してから貼り付けてください。登録した仕様の `servers` は、MCP Server が使う上流 URL の
+既定値になります。
 
-```bash
-BUNDLE=https://raw.githubusercontent.com/picketfence-labs/kong-api-bundle-insurance/v0.1.1
-svc=product   # customer / simulation / application / policy / claim
-curl -s "$BUNDLE/services/$svc/openapi.yaml" \
-  | yq ".servers = [{\"url\": \"http://$svc.insurance.svc.cluster.local:8000\"}]" \
-  | pbcopy
-```
+Pod のイメージは `v0.1.1` のままです。v0.1.1 と v0.1.2 の差分のうち `services/` 配下の変更は
+`openapi.yaml` だけなので、API の動作は同じです。
 
 ## Konnect UI への登録
 
@@ -62,8 +58,8 @@ curl -s "$BUNDLE/services/$svc/openapi.yaml" \
 の登録 → Data Plane の選択）で行う登録手順です。
 
 1. Konnect UI の **Context Mesh** で **MCP Server** を新規作成し、名前を `kong-insurance` にします。
-2. 接続先の API として、上の表の6つの API Source を一つずつ登録します。bundle の仕様を貼り付け、
-   上流 URL をクラスタ内の Service DNS にします。
+2. 接続先の API として、上の表の6つの API Source を一つずつ登録します。bundle の仕様（v0.1.2）を
+   そのまま貼り付けます。
 3. Data Plane には、World Weather MCP Server と同じ既存の Data Plane を選択します。新しい
    Control Plane は作成しません。
 4. 保存後、MCP Server の概要画面で状態とツール一覧を確認します。
