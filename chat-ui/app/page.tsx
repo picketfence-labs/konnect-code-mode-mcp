@@ -5,6 +5,7 @@ import { DefaultChatTransport } from 'ai'
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { MCP_SERVERS } from './mcp-servers'
 
 // LLMの実トークナイザーではなく、文字数からの概算（英語圏で一般的な4文字≒1トークン目安）。
 // tool呼び出し1件ごとの入出力サイズ感（トークン削減効果）を示す目的で十分な精度とする
@@ -35,7 +36,7 @@ export default function ChatPage() {
       <header className="mb-4">
         <h1 className="text-xl font-semibold">Context Mesh Chat Demo</h1>
         <p className="text-sm text-slate-500">
-          Kong Konnect Context Mesh（Code Mode）経由で、生の12,000件を読まずに集計結果だけを取得します。
+          世界の都市の月別気温と、保険の申込・契約・請求を質問できます。気温の例では12,000件の生データを読まずに集計できます。
         </p>
       </header>
 
@@ -65,12 +66,19 @@ export default function ChatPage() {
                   output?: unknown
                 }
                 const toolName = toolPart.toolName ?? toolPart.type.replace(/^tool-/, '')
+                const server = MCP_SERVERS.find(({ id }) => toolName.startsWith(`${id}_`))
+                const originalToolName = server ? toolName.slice(server.id.length + 1) : toolName
                 return (
                   <div
                     key={toolPart.toolCallId ?? i}
                     className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900"
                   >
-                    <span className="font-mono font-semibold">{toolName}</span>
+                    {server && (
+                      <span className="mr-2 rounded bg-amber-200 px-1.5 py-0.5 font-semibold">
+                        {server.label}
+                      </span>
+                    )}
+                    <span className="font-mono font-semibold">{originalToolName}</span>
                     {' — '}
                     {toolPart.state}
                     {toolPart.state === 'output-available' && (
@@ -93,7 +101,7 @@ export default function ChatPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="例: 過去10年の3月の平均気温Top5を教えてください"
+          placeholder="例: 3月の平均気温Top5、または商品ごとの保険申込の成立率"
           className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm"
           disabled={status === 'streaming' || status === 'submitted'}
         />
