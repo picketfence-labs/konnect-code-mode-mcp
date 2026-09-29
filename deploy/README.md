@@ -136,17 +136,19 @@ Next.jsアプリ自身がこのプレフィックス込みでルーティング�
 埋め込まれるため、変更する場合はイメージの再ビルドが必要（`chat-ui/app/page.tsx`の
 `useChat`に渡す`DefaultChatTransport`の`api`パスも合わせて変更すること）。
 
-### 1. Kong DP の内部Service名を確認し、MCP_SERVER_URLを埋める
+### 1. Kong DP の内部Service名を確認し、MCP_WEATHER_URLとMCP_INSURANCE_URLを埋める
 
 ```bash
 kubectl get svc -n default -l app=dataplane,gateway-operator.konghq.com/dataplane-service-type=ingress -o wide
 ```
 
 上記で得られたService名（例: `dataplane-ingress-dataplane-9zrnp`）を使い、
-`deploy/chat-ui/chat-ui.yaml`の`MCP_SERVER_URL`を次の形式に書き換える:
+`deploy/chat-ui/chat-ui.yaml`の`MCP_WEATHER_URL`と`MCP_INSURANCE_URL`を、
+同じService名を使ってそれぞれ次の形式に書き換える:
 
 ```
-http://<service名>.default.svc.cluster.local/mcp/world-monthly-temperature
+MCP_WEATHER_URL=http://<service名>.default.svc.cluster.local/mcp/world-monthly-temperature
+MCP_INSURANCE_URL=http://<service名>.default.svc.cluster.local/mcp/kong-insurance
 ```
 
 ### 2. Chat UI イメージを minikube 内にビルド
