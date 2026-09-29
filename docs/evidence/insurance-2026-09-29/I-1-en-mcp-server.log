@@ -1,0 +1,115 @@
+# execute 1/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
+2026-09-29T06:50:55.816979888Z ============================================================
+2026-09-29T06:50:55.816981430Z CODE MODE — Generated Python:
+2026-09-29T06:50:55.816983430Z ============================================================
+2026-09-29T06:50:55.816984138Z async def main():
+2026-09-29T06:50:55.816984763Z     # 1. Get products
+2026-09-29T06:50:55.816985430Z     products_res = await call_tool("property_dash_insurance_dash_product_dash_api_list_products_products_get", {"limit": 10})
+2026-09-29T06:50:55.816988346Z     # 2. Get applications
+2026-09-29T06:50:55.816989221Z     apps_res = await call_tool("property_dash_insurance_dash_application_dash_api_list_applications_applications_get", {"limit": 10})
+2026-09-29T06:50:55.816991013Z     # 3. Get policies
+2026-09-29T06:50:55.816991638Z     policies_res = await call_tool("property_dash_insurance_dash_policy_dash_api_list_policies_policies_get", {"limit": 10})
+2026-09-29T06:50:55.816992430Z     
+2026-09-29T06:50:55.816993013Z     # Return samples to inspect structure
+2026-09-29T06:50:55.816993680Z     return {
+2026-09-29T06:50:55.816994263Z         "products_sample": products_res.get("items", [])[:1],
+2026-09-29T06:50:55.816995013Z         "apps_sample": apps_res.get("items", [])[:1],
+2026-09-29T06:50:55.816995721Z         "policies_sample": policies_res.get("items", [])[:1],
+2026-09-29T06:50:55.816996388Z         "products_total": products_res.get("total"),
+2026-09-29T06:50:55.816997096Z         "apps_total": apps_res.get("total"),
+2026-09-29T06:50:55.816997846Z         "policies_total": policies_res.get("total")
+2026-09-29T06:50:55.816998513Z     }
+2026-09-29T06:50:55.816999138Z 
+2026-09-29T06:50:55.816999721Z return await main()
+2026-09-29T06:50:55.817000305Z ============================================================
+2026-09-29T06:50:55.817000971Z Available tools: ['call_tool']
+2026-09-29T06:50:55.817009471Z Result: {'products_sample': [{'product_code': 'FIRE-STD', 'product_name': '火災保険「住まいの安心」', 'category': '火災保険', 'description': '戸建て・マンションを対象に、火災・落雷・風災・水災などの損害を補償する住まいの保険です。', 'coverage_summary': '火災・落雷・風災・水災', 'min_age': 18, 'max_age': 99, 'policy_term': '1〜5年', 'min_sum_insured': 10000000, 'max_sum_insured': 50000000, 'premium_rate_table': {'annual_rate_on_sum_insured': 0.0007, 'annual_base_premium': 0, 'note': '年齢係数はsimulationサービスの共通計算ロジックを参照'}, 'riders': ['地震保険特約', '個人賠償責任特約'], 'status': '販売中', 'product_id': 'PRD-001', 'created_at': '2024-04-01T09:00:00+09:00', 'updated_at': '2024-04-01T09:00:00+09:00'}], 'apps_sample': [{'customer_id': 'CUS-000030', 'product_id': 'PRD-004', 'application_date': '2022-03-06', 'desired_sum_insured': 2500000, 'desired_payment_period': '1年（自動更新）', 'payment_method': '口座振替', 'health_declaration': {'has_pre_existing_condition': False, 'notes': '特記事項なし'}, 'beneficiary': None, 'insured_pet': None, 'status': '審査中', 'reviewed_at': None, 'rejection_reason': None, 'resulting_policy_id': None, 'application_id': 'APP-000001', 'created_at': '2022-03-06T09:30:00+09:00', 'updated_at': '2022-03-06T09:30:00+09:00'}], 'policies_sample': [{'policy_number': '2021-MED-000001', 'application_id': 'APP-000168', 'customer_id': 'CUS-000049', 'product_id': 'PRD-004', 'contract_date': '2021-05-04', 'effective_date': '2021-05-04', 'expiry_date': '2027-05-04', 'sum_insured': 4500000, 'premium_amount': 4750, 'premium_payment_cycle': '月払', 'payment_method': '口座振替', 'status': '有効', 'beneficiary': None, 'insured_pet': None, 'riders': ['先進医療特約', 'がん診断給付特約'], 'policy_id': 'POL-000001', 'created_at': '2021-05-04T10:00:00+09:00', 'updated_at': '2021-05-04T10:00:00+09:00'}], 'products_total': 5, 'apps_total': 300, 'policies_total': 200}
+2026-09-29T06:50:55.817027096Z ============================================================
+2026-09-29T06:50:55.817027930Z 
+2026-09-29T06:50:55.817028471Z INFO:     10.244.1.64:52078 - "POST /mcp HTTP/1.1" 200 OK
+# execute 2/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
+2026-09-29T06:51:01.033215459Z ============================================================
+2026-09-29T06:51:01.033218209Z CODE MODE — Generated Python:
+2026-09-29T06:51:01.033220751Z ============================================================
+2026-09-29T06:51:01.033222334Z async def main():
+2026-09-29T06:51:01.033223668Z     # Helper to retrieve all pages
+2026-09-29T06:51:01.033224918Z     async def get_all_items(tool_name, limit=100):
+2026-09-29T06:51:01.033226168Z         items = []
+2026-09-29T06:51:01.033227376Z         skip = 0
+2026-09-29T06:51:01.033228501Z         while True:
+2026-09-29T06:51:01.033229751Z             res = await call_tool(tool_name, {"skip": skip, "limit": limit})
+2026-09-29T06:51:01.033231293Z             batch = res.get("items", [])
+2026-09-29T06:51:01.033232584Z             if not batch:
+2026-09-29T06:51:01.033233751Z                 break
+2026-09-29T06:51:01.033234876Z             items.extend(batch)
+2026-09-29T06:51:01.033236043Z             skip += len(batch)
+2026-09-29T06:51:01.033237209Z             if len(items) >= res.get("total", 0):
+2026-09-29T06:51:01.033239126Z                 break
+2026-09-29T06:51:01.033240293Z         return items
+2026-09-29T06:51:01.033241459Z 
+2026-09-29T06:51:01.033242584Z     # Retrieve all data
+2026-09-29T06:51:01.033243751Z     products = await get_all_items("property_dash_insurance_dash_product_dash_api_list_products_products_get")
+2026-09-29T06:51:01.033245251Z     applications = await get_all_items("property_dash_insurance_dash_application_dash_api_list_applications_applications_get")
+2026-09-29T06:51:01.033246793Z     policies = await get_all_items("property_dash_insurance_dash_policy_dash_api_list_policies_policies_get")
+2026-09-29T06:51:01.033248209Z 
+2026-09-29T06:51:01.033263584Z     # Map product IDs to product names
+2026-09-29T06:51:01.033265209Z     product_map = {p["product_id"]: p["product_name"] for p in products}
+2026-09-29T06:51:01.033266709Z 
+2026-09-29T06:51:01.033267751Z     # Initialize aggregations
+2026-09-29T06:51:01.033268918Z     stats = {}
+2026-09-29T06:51:01.033270043Z     for pid, name in product_map.items():
+2026-09-29T06:51:01.033271251Z         stats[pid] = {
+2026-09-29T06:51:01.033272376Z             "product_id": pid,
+2026-09-29T06:51:01.033273584Z             "product_name": name,
+2026-09-29T06:51:01.033274834Z             "applications_count": 0,
+2026-09-29T06:51:01.033276043Z             "policies_count": 0
+2026-09-29T06:51:01.033277251Z         }
+2026-09-29T06:51:01.033278376Z 
+2026-09-29T06:51:01.033279459Z     # Count applications per product
+2026-09-29T06:51:01.033280626Z     for app in applications:
+2026-09-29T06:51:01.033281793Z         pid = app.get("product_id")
+2026-09-29T06:51:01.033283043Z         if pid in stats:
+2026-09-29T06:51:01.033284209Z             stats[pid]["applications_count"] += 1
+2026-09-29T06:51:01.033285668Z 
+2026-09-29T06:51:01.033286709Z     # Count policies per product
+2026-09-29T06:51:01.033287876Z     for pol in policies:
+2026-09-29T06:51:01.033289001Z         pid = pol.get("product_id")
+2026-09-29T06:51:01.033290168Z         if pid in stats:
+2026-09-29T06:51:01.033291293Z             stats[pid]["policies_count"] += 1
+2026-09-29T06:51:01.033292543Z 
+2026-09-29T06:51:01.033293626Z     # Calculate conversion rate
+2026-09-29T06:51:01.033294751Z     results = []
+2026-09-29T06:51:01.033295876Z     for pid, data in stats.items():
+2026-09-29T06:51:01.033297001Z         apps = data["applications_count"]
+2026-09-29T06:51:01.033298251Z         pols = data["policies_count"]
+2026-09-29T06:51:01.033299501Z         conversion_rate = (pols / apps) if apps > 0 else 0.0
+2026-09-29T06:51:01.033300834Z         results.append({
+2026-09-29T06:51:01.033301918Z             "product_id": pid,
+2026-09-29T06:51:01.033303584Z             "product_name": data["product_name"],
+2026-09-29T06:51:01.033305001Z             "applications": apps,
+2026-09-29T06:51:01.033306209Z             "policies": pols,
+2026-09-29T06:51:01.033307418Z             "conversion_rate": conversion_rate
+2026-09-29T06:51:01.033308668Z         })
+2026-09-29T06:51:01.033309751Z 
+2026-09-29T06:51:01.033310834Z     # Sort by conversion rate descending, then by applications count descending as a tie-breaker
+2026-09-29T06:51:01.033314959Z     # sorted cannot import operator, but we can use key with lambda
+2026-09-29T06:51:01.033316459Z     sorted_results = sorted(results, key=lambda x: (x["conversion_rate"], x["applications"]), reverse=True)
+2026-09-29T06:51:01.033317876Z 
+2026-09-29T06:51:01.033318918Z     # Limit to top 5 (since there are only 5 products, it will return all, but formatted nicely)
+2026-09-29T06:51:01.033320293Z     top_five = sorted_results[:5]
+2026-09-29T06:51:01.033321459Z 
+2026-09-29T06:51:01.033322501Z     return top_five
+2026-09-29T06:51:01.033323626Z 
+2026-09-29T06:51:01.033324626Z return await main()
+2026-09-29T06:51:01.033325751Z ============================================================
+2026-09-29T06:51:01.033326959Z Available tools: ['call_tool']
+2026-09-29T06:51:01.033328293Z Result: [{'product_id': 'PRD-002', 'product_name': '自動車保険「ドライブセーフ」', 'applications': 54, 'policies': 40, 'conversion_rate': 0.7407407407407407}, {'product_id': 'PRD-003', 'product_name': '傷害保険「ケガの安心サポート」', 'applications': 59, 'policies': 41, 'conversion_rate': 0.6949152542372882}, {'product_id': 'PRD-005', 'product_name': 'ペット保険「わんにゃんメディカル」', 'applications': 68, 'policies': 46, 'conversion_rate': 0.6764705882352942}, {'product_id': 'PRD-001', 'product_name': '火災保険「住まいの安心」', 'applications': 71, 'policies': 45, 'conversion_rate': 0.6338028169014085}, {'product_id': 'PRD-004', 'product_name': '医療保険「メディカルサポート」', 'applications': 48, 'policies': 28, 'conversion_rate': 0.5833333333333334}]
+2026-09-29T06:51:01.033331751Z ============================================================
+2026-09-29T06:51:01.033332959Z 
+2026-09-29T06:51:01.033334043Z INFO:     10.244.1.64:52084 - "POST /mcp HTTP/1.1" 400 Bad Request
+2026-09-29T06:51:01.040012043Z INFO:     10.244.1.64:52084 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:51:01.083818209Z INFO:     10.244.1.64:52084 - "POST /mcp HTTP/1.1" 202 Accepted
+2026-09-29T06:51:01.091053543Z INFO:     10.244.1.64:52084 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:51:03.726193502Z INFO:     10.244.1.64:52084 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:51:07.152756962Z INFO:     10.244.1.64:52084 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:51:11.235294964Z INFO:     10.244.1.64:52084 - "POST /mcp HTTP/1.1" 200 OK

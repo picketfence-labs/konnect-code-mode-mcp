@@ -1,0 +1,85 @@
+# execute 1/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
+2026-09-29T06:51:11.262848464Z ============================================================
+2026-09-29T06:51:11.262849756Z CODE MODE — Generated Python:
+2026-09-29T06:51:11.262851756Z ============================================================
+2026-09-29T06:51:11.262852673Z async def test():
+2026-09-29T06:51:11.262853631Z     claims = await call_tool("property_dash_insurance_dash_claim_dash_api_list_claims_claims_get", {"limit": 5})
+2026-09-29T06:51:11.262854923Z     policies = await call_tool("property_dash_insurance_dash_policy_dash_api_list_policies_policies_get", {"limit": 5})
+2026-09-29T06:51:11.262867048Z     products = await call_tool("property_dash_insurance_dash_product_dash_api_list_products_products_get", {"limit": 5})
+2026-09-29T06:51:11.262868423Z     return {"claims": claims, "policies": policies, "products": products}
+2026-09-29T06:51:11.262869589Z 
+2026-09-29T06:51:11.262870423Z return await test()
+2026-09-29T06:51:11.262871298Z ============================================================
+2026-09-29T06:51:11.262872214Z Available tools: ['call_tool']
+2026-09-29T06:51:20.357241469Z Result: {'claims': {'total': 50, 'items': [{'policy_id': 'POL-000124', 'customer_id': 'CUS-000024', 'claim_type': '入院', 'incident_date': '2025-06-03', 'claim_date': '2025-06-07', 'claim_amount_requested': 222000, 'claim_amount_paid': None, 'status': '審査中', 'description': '医療保険「メディカルサポート」にかかる入院の請求', 'processed_at': None, 'claim_id': 'CLM-000001', 'created_at': '2025-06-07T09:00:00+09:00', 'updated_at': '2025-06-07T09:00:00+09:00'}, {'policy_id': 'POL-000057', 'customer_id': 'CUS-000089', 'claim_type': '手術', 'incident_date': '2024-11-18', 'claim_date': '2024-12-11', 'claim_amount_requested': 509000, 'claim_amount_paid': 479208, 'status': '支払済', 'description': '傷害保険「ケガの安心サポート」にかかる手術の請求', 'processed_at': '2024-12-20T15:00:00+09:00', 'claim_id': 'CLM-000002', 'created_at': '2024-12-11T09:00:00+09:00', 'updated_at': '2024-12-20T15:00:00+09:00'}, {'policy_id': 'POL-000025', 'customer_id': 'CUS-000035', 'claim_type': '通院', 'incident_date': '2021-03-10', 'claim_date': '2021-03-11', 'claim_amount_requested': 59000, 'claim_amount_paid': None, 'status': '審査中', 'description': '傷害保険「ケガの安心サポート」にかかる通院の請求', 'processed_at': None, 'claim_id': 'CLM-000003', 'created_at': '2021-03-11T09:00:00+09:00', 'updated_at': '2021-03-11T09:00:00+09:00'}, {'policy_id': 'POL-000184', 'customer_id': 'CUS-000091', 'claim_type': '自動車事故', 'incident_date': '2017-12-05', 'claim_date': '2017-12-27', 'claim_amount_requested': 1126000, 'claim_amount_paid': 1061024, 'status': '支払済', 'description': '自動車保険「ドライブセーフ」にかかる自動車事故の請求', 'processed_at': '2018-01-09T15:00:00+09:00', 'claim_id': 'CLM-000004', 'created_at': '2017-12-27T09:00:00+09:00', 'updated_at': '2018-01-09T15:00:00+09:00'}, {'policy_id': 'POL-000109', 'customer_id': 'CUS-000083', 'claim_type': '自動車事故', 'incident_date': '2021-09-19', 'claim_date': '2021-09-30', 'claim_amount_requested': 788000, 'claim_amount_paid': 770456, 'status': '支払済', 'description': '自動車保険「ドライブセーフ」にかかる自動車事故の請求', 'processed_at': '2021-10-08T15:00:00+09:00', 'claim_id': 'CLM-000005', 'created_at': '2021-09-30T09:00:00+09:00', 'updated_at': '2021-10-08T15:00:00+09:00'}]}, 'policies': {'total': 200, 'items': [{'policy_number': '2021-MED-000001', 'application_id': 'APP-000168', 'customer_id': 'CUS-000049', 'product_id': 'PRD-004', 'contract_date': '2021-05-04', 'effective_date': '2021-05-04', 'expiry_date': '2027-05-04', 'sum_insured': 4500000, 'premium_amount': 4750, 'premium_payment_cycle': '月払', 'payment_method': '口座振替', 'status': '有効', 'beneficiary': None, 'insured_pet': None, 'riders': ['先進医療特約', 'がん診断給付特約'], 'policy_id': 'POL-000001', 'created_at': '2021-05-04T10:00:00+09:00', 'updated_at': '2021-05-04T10:00:00+09:00'}, {'policy_number': '2025-AUTO-000002', 'application_id': 'APP-000098', 'customer_id': 'CUS-000080', 'product_id': 'PRD-002', 'contract_date': '2025-02-16', 'effective_date': '2025-02-16', 'expiry_date': '2027-02-16', 'sum_insured': 3500000, 'premium_amount': 55000, 'premium_payment_cycle': '年払', 'payment_method': '口座振替', 'status': '有効', 'beneficiary': None, 'insured_pet': None, 'riders': [], 'policy_id': 'POL-000002', 'created_at': '2025-02-16T10:00:00+09:00', 'updated_at': '2025-02-16T10:00:00+09:00'}, {'policy_number': '2022-AUTO-000003', 'application_id': 'APP-000062', 'customer_id': 'CUS-000033', 'product_id': 'PRD-002', 'contract_date': '2022-01-14', 'effective_date': '2022-01-14', 'expiry_date': '2027-01-14', 'sum_insured': 4000000, 'premium_amount': 7330, 'premium_payment_cycle': '月払', 'payment_method': '口座振替', 'status': '失効', 'beneficiary': None, 'insured_pet': None, 'riders': ['弁護士費用特約'], 'policy_id': 'POL-000003', 'created_at': '2022-01-14T10:00:00+09:00', 'updated_at': '2022-01-14T10:00:00+09:00'}, {'policy_number': '2026-FIRE-000004', 'application_id': 'APP-000240', 'customer_id': 'CUS-000037', 'product_id': 'PRD-001', 'contract_date': '2026-07-26', 'effective_date': '2026-07-26', 'expiry_date': '2031-07-26', 'sum_insured': 31000000, 'premium_amount': 21700, 'premium_payment_cycle': '年払', 'payment_method': 'クレジットカード', 'status': '有効', 'beneficiary': None, 'insured_pet': None, 'riders': [], 'policy_id': 'POL-000004', 'created_at': '2026-07-26T10:00:00+09:00', 'updated_at': '2026-07-26T10:00:00+09:00'}, {'policy_number': '2020-PA-000005', 'application_id': 'APP-000028', 'customer_id': 'CUS-000006', 'product_id': 'PRD-003', 'contract_date': '2020-07-07', 'effective_date': '2020-07-07', 'expiry_date': '2027-07-07', 'sum_insured': 10000000, 'premium_amount': 10400, 'premium_payment_cycle': '一括', 'payment_method': '口座振替', 'status': '有効', 'beneficiary': {'name': '清水 次郎', 'relationship': '子'}, 'insured_pet': None, 'riders': [], 'policy_id': 'POL-000005', 'created_at': '2020-07-07T10:00:00+09:00', 'updated_at': '2020-07-07T10:00:00+09:00'}]}, 'products': {'total': 5, 'items': [{'product_code': 'FIRE-STD', 'product_name': '火災保険「住まいの安心」', 'category': '火災保険', 'description': '戸建て・マンションを対象に、火災・落雷・風災・水災などの損害を補償する住まいの保険です。', 'coverage_summary': '火災・落雷・風災・水災', 'min_age': 18, 'max_age': 99, 'policy_term': '1〜5年', 'min_sum_insured': 10000000, 'max_sum_insured': 50000000, 'premium_rate_table': {'annual_rate_on_sum_insured': 0.0007, 'annual_base_premium': 0, 'note': '年齢係数はsimulationサービスの共通計算ロジックを参照'}, 'riders': ['地震保険特約', '個人賠償責任特約'], 'status': '販売中', 'product_id': 'PRD-001', 'created_at': '2024-04-01T09:00:00+09:00', 'updated_at': '2024-04-01T09:00:00+09:00'}, {'product_code': 'AUTO-STD', 'product_name': '自動車保険「ドライブセーフ」', 'category': '自動車保険', 'description': '対人・対物・車両損害を補償する任意自動車保険です。等級・年齢条件に応じて保険料が変動します。', 'coverage_summary': '対人・対物・車両保険', 'min_age': 18, 'max_age': 99, 'policy_term': '1年（自動更新）', 'min_sum_insured': 1000000, 'max_sum_insured': 5000000, 'premium_rate_table': {'annual_rate_on_sum_insured': 0.0, 'annual_base_premium': 55000, 'note': '年齢係数はsimulationサービスの共通計算ロジックを参照'}, 'riders': ['弁護士費用特約', 'ロードサービス特約'], 'status': '販売中', 'product_id': 'PRD-002', 'created_at': '2024-04-01T09:00:00+09:00', 'updated_at': '2024-04-01T09:00:00+09:00'}, {'product_code': 'PA-STD', 'product_name': '傷害保険「ケガの安心サポート」', 'category': '傷害保険', 'description': '急激かつ偶然な事故によるケガの入院・通院・後遺障害・死亡を補償します。', 'coverage_summary': '入院・通院・後遺障害・死亡保障（急激・偶然な事故）', 'min_age': 0, 'max_age': 80, 'policy_term': '1年（自動更新）', 'min_sum_insured': 1000000, 'max_sum_insured': 10000000, 'premium_rate_table': {'annual_rate_on_sum_insured': 0.0006, 'annual_base_premium': 2000, 'note': '年齢係数はsimulationサービスの共通計算ロジックを参照'}, 'riders': ['個人賠償責任特約'], 'status': '販売中', 'product_id': 'PRD-003', 'created_at': '2024-04-01T09:00:00+09:00', 'updated_at': '2024-04-01T09:00:00+09:00'}, {'product_code': 'MED-STD', 'product_name': '医療保険「メディカルサポート」', 'category': '医療保険', 'description': '病気・ケガによる入院・手術を保障する医療保険（第三分野）です。', 'coverage_summary': '入院・手術給付金', 'min_age': 0, 'max_age': 75, 'policy_term': '1年（自動更新）', 'min_sum_insured': 1000000, 'max_sum_insured': 5000000, 'premium_rate_table': {'annual_rate_on_sum_insured': 0.012, 'annual_base_premium': 3000, 'note': '年齢係数はsimulationサービスの共通計算ロジックを参照'}, 'riders': ['先進医療特約', 'がん診断給付特約'], 'status': '販売中', 'product_id': 'PRD-004', 'created_at': '2024-04-01T09:00:00+09:00', 'updated_at': '2024-04-01T09:00:00+09:00'}, {'product_code': 'PET-STD', 'product_name': 'ペット保険「わんにゃんメディカル」', 'category': 'ペット保険', 'description': '動物病院での診療費（入院・手術・通院）を補償するペット保険です。', 'coverage_summary': '動物病院での診療費（入院・手術・通院）', 'min_age': 0, 'max_age': 12, 'policy_term': '1年（自動更新）', 'min_sum_insured': 300000, 'max_sum_insured': 1000000, 'premium_rate_table': {'annual_rate_on_sum_insured': 0.07, 'annual_base_premium': 5000, 'note': '年齢係数はsimulationサービスの共通計算ロジックを参照'}, 'riders': [], 'status': '販売中', 'product_id': 'PRD-005', 'created_at': '2024-04-01T09:00:00+09:00', 'updated_at': '2024-04-01T09:00:00+09:00'}]}}
+2026-09-29T06:51:20.357390594Z ============================================================
+2026-09-29T06:51:20.357998177Z 
+2026-09-29T06:51:20.358005135Z INFO:     10.244.1.64:34044 - "POST /mcp HTTP/1.1" 200 OK
+# execute 2/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
+2026-09-29T06:51:24.618338346Z ============================================================
+2026-09-29T06:51:24.618343471Z CODE MODE — Generated Python:
+2026-09-29T06:51:24.618346137Z ============================================================
+2026-09-29T06:51:24.618347471Z async def run():
+2026-09-29T06:51:24.618348679Z     async def get_all_claims():
+2026-09-29T06:51:24.618349846Z         claims = []
+2026-09-29T06:51:24.618351012Z         skip = 0
+2026-09-29T06:51:24.618352179Z         limit = 100
+2026-09-29T06:51:24.618353554Z         while True:
+2026-09-29T06:51:24.618354971Z             res = await call_tool("property_dash_insurance_dash_claim_dash_api_list_claims_claims_get", {"skip": skip, "limit": limit})
+2026-09-29T06:51:24.618403012Z             items = res.get("items", [])
+2026-09-29T06:51:24.618404846Z             claims.extend(items)
+2026-09-29T06:51:24.618406096Z             if len(claims) >= res.get("total", 0) or not items:
+2026-09-29T06:51:24.618408096Z                 break
+2026-09-29T06:51:24.618409304Z             skip += limit
+2026-09-29T06:51:24.618410471Z         return claims
+2026-09-29T06:51:24.618422387Z 
+2026-09-29T06:51:24.618423679Z     async def get_all_policies():
+2026-09-29T06:51:24.618424971Z         policies = []
+2026-09-29T06:51:24.618426137Z         skip = 0
+2026-09-29T06:51:24.618427262Z         limit = 100
+2026-09-29T06:51:24.618428429Z         while True:
+2026-09-29T06:51:24.618429804Z             res = await call_tool("property_dash_insurance_dash_policy_dash_api_list_policies_policies_get", {"skip": skip, "limit": limit})
+2026-09-29T06:51:24.618431596Z             items = res.get("items", [])
+2026-09-29T06:51:24.618432846Z             policies.extend(items)
+2026-09-29T06:51:24.618434096Z             if len(policies) >= res.get("total", 0) or not items:
+2026-09-29T06:51:24.618435429Z                 break
+2026-09-29T06:51:24.618436554Z             skip += limit
+2026-09-29T06:51:24.618437762Z         return policies
+2026-09-29T06:51:24.618438929Z 
+2026-09-29T06:51:24.618439971Z     async def get_all_products():
+2026-09-29T06:51:24.618441262Z         res = await call_tool("property_dash_insurance_dash_product_dash_api_list_products_products_get", {"limit": 100})
+2026-09-29T06:51:24.618442804Z         return res.get("items", [])
+2026-09-29T06:51:24.618444096Z 
+2026-09-29T06:51:24.618445137Z     claims = await get_all_claims()
+2026-09-29T06:51:24.618446346Z     policies = await get_all_policies()
+2026-09-29T06:51:24.618447554Z     products = await get_all_products()
+2026-09-29T06:51:24.618448762Z 
+2026-09-29T06:51:24.618449846Z     policy_to_product = {p["policy_id"]: p["product_id"] for p in policies}
+2026-09-29T06:51:24.618451304Z     product_id_to_name = {p["product_id"]: p["product_name"] for p in products}
+2026-09-29T06:51:24.618452679Z 
+2026-09-29T06:51:24.618453762Z     product_totals = {}
+2026-09-29T06:51:24.618454929Z     for claim in claims:
+2026-09-29T06:51:24.618456054Z         if claim.get("status") == "支払済":
+2026-09-29T06:51:24.618457887Z             policy_id = claim.get("policy_id")
+2026-09-29T06:51:24.618459221Z             amount = claim.get("claim_amount_paid") or 0
+2026-09-29T06:51:24.618460512Z             product_id = policy_to_product.get(policy_id)
+2026-09-29T06:51:24.618461721Z             if product_id:
+2026-09-29T06:51:24.618462929Z                 product_name = product_id_to_name.get(product_id, "不明な商品")
+2026-09-29T06:51:24.618464387Z                 product_totals[product_name] = product_totals.get(product_name, 0) + amount
+2026-09-29T06:51:24.618465721Z 
+2026-09-29T06:51:24.618468096Z     sorted_totals = sorted(product_totals.items(), key=lambda x: x[1], reverse=True)[:5]
+2026-09-29T06:51:24.618469471Z     return sorted_totals
+2026-09-29T06:51:24.618472179Z 
+2026-09-29T06:51:24.618473387Z return await run()
+2026-09-29T06:51:24.618474554Z ============================================================
+2026-09-29T06:51:24.618475804Z Available tools: ['call_tool']
+2026-09-29T06:51:24.618484304Z Result: [('火災保険「住まいの安心」', 23497720), ('傷害保険「ケガの安心サポート」', 9884887), ('自動車保険「ドライブセーフ」', 4662288), ('医療保険「メディカルサポート」', 1250942), ('ペット保険「わんにゃんメディカル」', 639214)]
+2026-09-29T06:51:24.618490262Z ============================================================
+2026-09-29T06:51:24.618491512Z 
+2026-09-29T06:51:24.618492637Z INFO:     10.244.1.64:46160 - "POST /mcp HTTP/1.1" 400 Bad Request
+2026-09-29T06:51:24.625467929Z INFO:     10.244.1.64:46160 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:51:24.672665679Z INFO:     10.244.1.64:46160 - "POST /mcp HTTP/1.1" 202 Accepted
+2026-09-29T06:51:24.676197512Z INFO:     10.244.1.64:46160 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:51:27.782613764Z INFO:     10.244.1.64:46170 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:51:30.258338001Z INFO:     10.244.1.64:46170 - "POST /mcp HTTP/1.1" 200 OK
+2026-09-29T06:51:33.131887669Z INFO:     10.244.1.64:46170 - "POST /mcp HTTP/1.1" 200 OK

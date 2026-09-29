@@ -147,12 +147,22 @@ Admin権限が付与されている）。以下の手順でLogQLを実行する:
 
 「過去10年の3月の平均気温Top5」以外にも、複数のクエリパターン（月指定の集計、Top10、
 月別全件集計、2つの月の差分算出など）で正しく集計できることを確認済み。各テストケースの
-入力・期待値・画面キャプチャ・実ログ（mock-api / mcp-server）は [TEST.md](TEST.md) に
+入力・期待値・画面キャプチャ・実ログ（mock-api / mcp-server）は [TEST_WORLD_WEATHER.md](TEST_WORLD_WEATHER.md) に
 1件ずつ切り分けて記録している。
 
 いずれも `execute`（サンドボックス内で mock-api を約100回呼び出す集計コードを実行）を経て
 LLM に返るのは Top5/Top10 の集計結果のみであることを、入出力トークン数表示・生成コード
 ログの両面で確認済み（2026-09-05。トークン数表示は2026-09-09にPR #14で追加）。
+
+### Insuranceのデモクエリ
+
+Chat UIにWorld WeatherとInsuranceの両方のMCP URLを設定する（[Chat UIの設定](deploy/README.md#chat-uinextjs--vercel-ai-sdk--mcp-client)、[Insuranceの登録](deploy/insurance/README.md)）。次の日本語の質問を順に送る。実測とログは[TEST_INSURANCE.md](TEST_INSURANCE.md)を参照。
+
+| ケース | 質問 | 見るべき点 |
+|---|---|---|
+| I-1 | 商品ごとに申込件数と成立した契約件数を集計し、成立率の高い順に上位5商品を示してください。申込と契約は別のAPIから取得してください。 | 申込・契約・商品を結合し、成立率を算出する |
+| I-2 | ステータスが「支払済」の保険金請求だけを対象に、支払額を商品別に合計し、上位5商品を示してください。請求対象の契約から商品を特定してください。 | 支払済の条件で絞り、請求から契約・商品へ結合する |
+| I-3 | 既存契約の保険料ではなく、新規の自動車保険PRD-002を1990-01-01生・補償額300万円で試算し、月額と年額を教えてください。 | 試算Toolを選び、既存契約の保険料を使わない |
 
 ---
 
@@ -184,7 +194,8 @@ Session not found / egress ガード 等）を参照。
 
 ## 参照
 
-- テストケース集（Chat UIデモクエリの入力/出力/ログ）: [TEST.md](TEST.md)
+- World Weatherのテストケース集（Chat UIデモクエリの入力/出力/ログ）: [TEST_WORLD_WEATHER.md](TEST_WORLD_WEATHER.md)
+- Insuranceのテストケース集（Chat UIデモクエリの入力/出力/ログ）: [TEST_INSURANCE.md](TEST_INSURANCE.md)
 - デプロイ手順: [deploy/README.md](deploy/README.md)
 - Chat UI 技術背景: [ADR-0004](docs/decisions/0004-chat-ui-tech-stack.md)
 - ログ基盤（トークン使用量の実測）: [deploy/observability/README.md](deploy/observability/README.md)
