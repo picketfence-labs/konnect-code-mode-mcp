@@ -1,49 +1,49 @@
-# TEST_INSURANCE — Insuranceのテストケース集
+# TEST_INSURANCE — Insurance Test Cases
 
-> English: [TEST_INSURANCE.en.md](TEST_INSURANCE.en.md)
+> Japanese (authoritative): [TEST_INSURANCE.md](TEST_INSURANCE.md) — this English version is a translation.
 
-Insuranceのユースケースでは、手元のOpenAPI仕様を無変更でContext Meshへ登録してMCP Server化し、6 API・32 Toolから目的のToolを選び、申込・契約・請求・商品を結合して集計する。気温データをsandbox内で集計してトークン削減を示すユースケースは[TEST_WORLD_WEATHER.md](TEST_WORLD_WEATHER.md)を参照。
+The Insurance use case registers local OpenAPI specifications in Context Mesh as-is to create an MCP Server, selects the required Tools from 6 APIs and 32 Tools, then joins and aggregates applications, policies, claims, and products. For the temperature-data use case that demonstrates token reduction through sandbox aggregation, see [TEST_WORLD_WEATHER.md](TEST_WORLD_WEATHER.en.md).
 
-## 実施環境
+## Test environment
 
-2026-09-29に取得した`docs/evidence/insurance-2026-09-29/`の実測証跡に基づく。
+Based on measured evidence captured on 2026-09-29 in `docs/evidence/insurance-2026-09-29/`.
 
-| 項目 | 値 |
+| Item | Value |
 |---|---|
-| 実施日時 | 2026-09-29 15:47〜15:52 JST（06:47〜06:52 UTC） |
-| Chat UI | `main` `a57553b`（PR #24の2 MCP Server同時接続を含む）を`next build`し、ローカルの`next start -p 3100`で起動。`MCP_WEATHER_URL=http://127.0.0.1/mcp/world-monthly-temperature`、`MCP_INSURANCE_URL=http://127.0.0.1/mcp/kong-insurance`（`minikube tunnel`経由）。クラスタ上のChat UI（`chat-ui:0.1.0`）ではない |
-| LLM | `gemini-3.5-flash`（Chat UIの既定） |
-| MCP Server | `kong-insurance`（Context Mesh MCP Server 3.3.1、runner `kong/mcp-server-runner:0.6.0`）。6 Source、32 Tool |
-| 登録した仕様 | kong-api-bundle-insurance **v0.1.3**の`services/<svc>/openapi.yaml`を無変更で登録（英語のsummary／description） |
-| Tool名 | `property_dash_insurance_dash_<svc>_dash_api_<operationId>`（simulationは`property_dash_insurance_dash_premium_dash_simulation_dash_api_...`） |
-| Insurance API | `insurance` namespace、image `v0.1.1`（seedの状態。書き込み操作は実行していない） |
-| 日本語の質問 | ブラウザ（Playwright）から実行し、画面を保存 |
-| 英語の質問 | Chat UIのAPI（`POST /chat-ui/api/chat`）へ直接送信。画面キャプチャは無い。回答全文は`docs/evidence/insurance-2026-09-29/I-*-en-answer.md` |
+| Date and time | 2026-09-29 15:47–15:52 JST (06:47–06:52 UTC) |
+| Chat UI | `main` `a57553b` (including simultaneous connection to 2 MCP Servers from PR #24), built with `next build` and run locally with `next start -p 3100`. `MCP_WEATHER_URL=http://127.0.0.1/mcp/world-monthly-temperature`, `MCP_INSURANCE_URL=http://127.0.0.1/mcp/kong-insurance` (through `minikube tunnel`). Not the Chat UI running in the cluster (`chat-ui:0.1.0`). |
+| LLM | `gemini-3.5-flash` (Chat UI default) |
+| MCP Server | `kong-insurance` (Context Mesh MCP Server 3.3.1, runner `kong/mcp-server-runner:0.6.0`). 6 Sources, 32 Tools. |
+| Registered spec | `services/<svc>/openapi.yaml` from kong-api-bundle-insurance **v0.1.3**, registered as-is (English summaries / descriptions). |
+| Tool names | `property_dash_insurance_dash_<svc>_dash_api_<operationId>` (for simulation: `property_dash_insurance_dash_premium_dash_simulation_dash_api_...`) |
+| Insurance API | `insurance` namespace, image `v0.1.1` (seed state; no write operations were run). |
+| Japanese questions | Run from a browser (Playwright); screenshots saved. |
+| English questions | Sent directly to the Chat UI API (`POST /chat-ui/api/chat`). No screenshots. Full answers are in `docs/evidence/insurance-2026-09-29/I-*-en-answer.md`. |
 
-## 実行方法
+## How to run
 
-Chat UIにWorld Weather（`/mcp/world-monthly-temperature`）とInsurance（`/mcp/kong-insurance`）の両方のURLを設定し、各ケースの質問を送る。Tool名の`weather_`／`insurance_`で接続先を区別する。設定手順は[deploy/README.mdのChat UI節](deploy/README.md#chat-uinextjs--vercel-ai-sdk--mcp-client)と[deploy/insurance/README.md](deploy/insurance/README.md)を参照。
+Configure both World Weather (`/mcp/world-monthly-temperature`) and Insurance (`/mcp/kong-insurance`) URLs in Chat UI, then submit each case's question. Tool names `weather_` / `insurance_` distinguish the destination. See [Chat UI settings in deploy/README.md](deploy/README.en.md#chat-ui-nextjs--vercel-ai-sdk--mcp-client) and [deploy/insurance/README.md](deploy/insurance/README.en.md) for setup.
 
-## I-1: 申込から契約への成立率
+## I-1: Conversion rate from applications to policies
 
-### テストの内容
+### Test description
 
-商品・申込・契約を別のAPIから取得して商品IDで集計し、契約件数÷申込件数による成立率の上位5商品を出す。
+Fetch products, applications, and policies from separate APIs, aggregate by product ID, and return the 5 products with the highest conversion rate (policy count ÷ application count).
 
-### インプット
+### Input
 
-- 日本語: 「商品ごとに申込件数と成立した契約件数を集計し、成立率の高い順に上位5商品を示してください。申込と契約は別のAPIから取得してください。」
-- 英語: "For each insurance product, count applications and issued policies, then show the top five by policy conversion rate. Retrieve applications and policies from their respective APIs."
+- Japanese: 「商品ごとに申込件数と成立した契約件数を集計し、成立率の高い順に上位5商品を示してください。申込と契約は別のAPIから取得してください。」
+- English: "For each insurance product, count applications and issued policies, then show the top five by policy conversion rate. Retrieve applications and policies from their respective APIs."
 
-### 期待する処理
+### Expected processing
 
-`insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×2（日・英とも）。最初の`execute`でデータの形を確認し、最後の`execute`で商品、申込300件（100件ずつ3ページ）、契約200件（100件ずつ2ページ）を取得して集計する。
+`insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×2 (both Japanese and English). The first `execute` checks the data shape; the final `execute` fetches products, 300 applications (3 pages of 100), and 200 policies (2 pages of 100), then aggregates them.
 
-### 基準値
+### Baseline
 
-seedを直接集計した基準値。成立率は契約件数÷申込件数を小数点以下2桁の%で表示する。
+Baseline computed directly from seed data. Display conversion rate (policy count ÷ application count) as a percentage with 2 decimal places.
 
-| 順位 | 商品 | 申込件数 | 契約件数 | 成立率 |
+| Rank | Product | Applications | Policies | Conversion rate |
 |---:|---|---:|---:|---:|
 | 1 | 自動車保険「ドライブセーフ」 | 54 | 40 | 74.07% |
 | 2 | 傷害保険「ケガの安心サポート」 | 59 | 41 | 69.49% |
@@ -51,19 +51,19 @@ seedを直接集計した基準値。成立率は契約件数÷申込件数を�
 | 4 | 火災保険「住まいの安心」 | 71 | 45 | 63.38% |
 | 5 | 医療保険「メディカルサポート」 | 48 | 28 | 58.33% |
 
-### アウトプット
+### Output
 
-日本語のブラウザ画面と英語のAPI直接送信の回答は、上の5件と順序・数値が一致した。英語回答全文は`docs/evidence/insurance-2026-09-29/I-1-en-answer.md`。英語の回の画面は無い。
+The Japanese browser response and English direct API response matched the 5 rows above in order and values. The full English response is `docs/evidence/insurance-2026-09-29/I-1-en-answer.md`. There is no screenshot of the English run.
 
-### 画面キャプチャ
+### Screenshot
 
-![I-1 日本語のChat UI実行結果](assets/images/chat-ui-insurance-i1-conversion-rate.png)
+![I-1 Japanese Chat UI result](assets/images/chat-ui-insurance-i1-conversion-rate.png)
 
-### ログ
+### Logs
 
-Tool呼び出し順（`toolCalls`）: `insurance_list_tools` → `insurance_get_schema` → `insurance_execute` → `insurance_execute`。
+Tool call order (`toolCalls`): `insurance_list_tools` → `insurance_get_schema` → `insurance_execute` → `insurance_execute`.
 
-**最後の`execute`の生成コードと結果**（`docs/evidence/insurance-2026-09-29/I-1-ja-mcp-server.log`から抜粋）:
+**Generated code and result from the final `execute`** (excerpt from `docs/evidence/insurance-2026-09-29/I-1-ja-mcp-server.log`):
 
 ```text
 # execute 2/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
@@ -140,7 +140,7 @@ Tool呼び出し順（`toolCalls`）: `insurance_list_tools` → `insurance_get_
 2026-09-29T06:48:10.941429006Z Result: [{'product_id': 'PRD-002', 'product_name': '自動車保険「ドライブセーフ」', 'application_count': 54, 'policy_count': 40, 'success_rate': 74.07}, {'product_id': 'PRD-003', 'product_name': '傷害保険「ケガの安心サポート」', 'application_count': 59, 'policy_count': 41, 'success_rate': 69.49}, {'product_id': 'PRD-005', 'product_name': 'ペット保険「わんにゃんメディカル」', 'application_count': 68, 'policy_count': 46, 'success_rate': 67.65}, {'product_id': 'PRD-001', 'product_name': '火災保険「住まいの安心」', 'application_count': 71, 'policy_count': 45, 'success_rate': 63.38}, {'product_id': 'PRD-004', 'product_name': '医療保険「メディカルサポート」', 'application_count': 48, 'policy_count': 28, 'success_rate': 58.33}]
 ```
 
-**上流Insurance APIのアクセスログ**（日本語の回、`docs/evidence/insurance-2026-09-29/I-1-ja-insurance-api.log`から抜粋）:
+**Upstream Insurance API access logs** (Japanese run; excerpt from `docs/evidence/insurance-2026-09-29/I-1-ja-insurance-api.log`):
 
 ```text
 2026-09-29T06:47:28.815982458Z [product] INFO:     10.244.1.70:58230 - "GET /products?limit=1 HTTP/1.1" 200 OK
@@ -154,26 +154,26 @@ Tool呼び出し順（`toolCalls`）: `insurance_list_tools` → `insurance_get_
 2026-09-29T06:47:36.716145712Z [policy] INFO:     10.244.1.70:35684 - "GET /policies?skip=100&limit=100 HTTP/1.1" 200 OK
 ```
 
-## I-2: 支払済請求額の商品別集計
+## I-2: Aggregate paid claim amounts by product
 
-### テストの内容
+### Test description
 
-請求から契約を経由して商品を特定し、ステータスが「支払済」の請求だけを商品別に集計する。
+Resolve a product through the policy linked from each claim, and aggregate by product only claims whose status is “支払済” (paid).
 
-### インプット
+### Input
 
-- 日本語: 「ステータスが「支払済」の保険金請求だけを対象に、支払額を商品別に合計し、上位5商品を示してください。請求対象の契約から商品を特定してください。」
-- 英語: "Consider only insurance claims whose status is 支払済 (paid). Sum the paid amounts by insurance product and show the top five. Resolve each claim's product through its policy."
+- Japanese: 「ステータスが「支払済」の保険金請求だけを対象に、支払額を商品別に合計し、上位5商品を示してください。請求対象の契約から商品を特定してください。」
+- English: "Consider only insurance claims whose status is 支払済 (paid). Sum the paid amounts by insurance product and show the top five. Resolve each claim's product through its policy."
 
-### 期待する処理
+### Expected processing
 
-日本語は`insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×3、英語は`insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×2。`status == '支払済'`で絞り、`claim_amount_paid`がnullなら0として扱う。請求の`policy_id`から契約の商品IDを引き、商品名へ結びつける。
+Japanese: `insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×3. English: `insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×2. Filter on `status == '支払済'`; treat null `claim_amount_paid` as 0. Resolve the product ID through the claim's `policy_id`, then map it to a product name.
 
-### 基準値
+### Baseline
 
-seedを直接集計した基準値。対象は「支払済」28件。
+Baseline computed directly from seed data. The target set contains 28 “支払済” claims.
 
-| 順位 | 商品 | 支払額の合計 |
+| Rank | Product | Total paid amount |
 |---:|---|---:|
 | 1 | 火災保険「住まいの安心」 | 23,497,720円 |
 | 2 | 傷害保険「ケガの安心サポート」 | 9,884,887円 |
@@ -181,29 +181,29 @@ seedを直接集計した基準値。対象は「支払済」28件。
 | 4 | 医療保険「メディカルサポート」 | 1,250,942円 |
 | 5 | ペット保険「わんにゃんメディカル」 | 639,214円 |
 
-### アウトプット
+### Output
 
-日本語のブラウザ画面と英語のAPI直接送信の回答は、上の5件と順序・数値が一致した。英語の質問に対する回答も日本語だった。英語回答全文は`docs/evidence/insurance-2026-09-29/I-2-en-answer.md`。英語の回の画面は無い。
+The Japanese browser response and English direct API response matched the 5 rows above in order and values. The answer to the English question was also in Japanese. Full English response: `docs/evidence/insurance-2026-09-29/I-2-en-answer.md`. There is no screenshot of the English run.
 
-#### 条件を明示する前の回
+#### Run before clarifying the condition
 
-当初の設計どおり「支払済みの保険金請求額を商品別に合計し、上位5商品を示してください。請求対象の契約から商品を特定してください。」と日本語で質問した回は、**基準値と一致しなかった**。回答は火災39,563,922円、傷害11,654,702円、自動車5,872,134円、医療1,250,942円、ペット886,584円（36件）だった。生成コードは`claim_amount_paid > 0`を条件にしたため、ステータス「承認」の請求も含めた。
+The first Japanese query followed the original design: 「支払済みの保険金請求額を商品別に合計し、上位5商品を示してください。請求対象の契約から商品を特定してください。」 The result **did not match the baseline**: fire ¥39,563,922, accident ¥11,654,702, auto ¥5,872,134, medical ¥1,250,942, and pet ¥886,584 (36 claims). Generated code filtered on `claim_amount_paid > 0`, so it also included claims with status “承認” (approved).
 
-この回の`toolCalls`は`insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×2だった。
+The `toolCalls` for this run were `insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×2.
 
-業務上の条件は質問で明示する。この教訓を受け、「ステータスが「支払済」」を明示した質問を本テストケースとして採用した。
+State business conditions explicitly in the question. Based on this finding, the current test case explicitly specifies “status is 支払済”.
 
-![I-2 条件が曖昧だった回のChat UI実行結果](assets/images/chat-ui-insurance-i2-ambiguous-run.png)
+![I-2 Chat UI result from the run with an ambiguous condition](assets/images/chat-ui-insurance-i2-ambiguous-run.png)
 
-### 画面キャプチャ
+### Screenshot
 
-![I-2 条件を明示した日本語のChat UI実行結果](assets/images/chat-ui-insurance-i2-paid-claims.png)
+![I-2 Japanese Chat UI result with the condition explicit](assets/images/chat-ui-insurance-i2-paid-claims.png)
 
-### ログ
+### Logs
 
-Tool呼び出し順（`toolCalls`）: 日本語 `insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×3。英語 `insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×2。
+Tool call order (`toolCalls`): Japanese `insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×3. English `insurance_list_tools` → `insurance_get_schema` → `insurance_execute` ×2.
 
-**最後の`execute`の生成コードと結果**（`docs/evidence/insurance-2026-09-29/I-2-ja-mcp-server.log`から抜粋）:
+**Generated code and result from the final `execute`** (excerpt from `docs/evidence/insurance-2026-09-29/I-2-ja-mcp-server.log`):
 
 ```text
 # execute 3/3（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
@@ -273,7 +273,7 @@ Tool呼び出し順（`toolCalls`）: 日本語 `insurance_list_tools` → `insu
 2026-09-29T06:50:37.864914546Z Result: [('火災保険「住まいの安心」', 23497720), ('傷害保険「ケガの安心サポート」', 9884887), ('自動車保険「ドライブセーフ」', 4662288), ('医療保険「メディカルサポート」', 1250942), ('ペット保険「わんにゃんメディカル」', 639214)]
 ```
 
-**上流Insurance APIのアクセスログ**（日本語の回、`docs/evidence/insurance-2026-09-29/I-2-ja-insurance-api.log`から抜粋）:
+**Upstream Insurance API access logs** (Japanese run; excerpt from `docs/evidence/insurance-2026-09-29/I-2-ja-insurance-api.log`):
 
 ```text
 2026-09-29T06:50:10.950163506Z [claim] INFO:     10.244.1.70:48536 - "GET /claims?limit=1 HTTP/1.1" 200 OK
@@ -286,9 +286,9 @@ Tool呼び出し順（`toolCalls`）: 日本語 `insurance_list_tools` → `insu
 2026-09-29T06:50:21.560092011Z [product] INFO:     10.244.1.70:58694 - "GET /products?limit=100 HTTP/1.1" 200 OK
 ```
 
-#### 条件が曖昧だった回のログ
+#### Logs from the run with an ambiguous condition
 
-**最後の`execute`の生成コードと結果**（`docs/evidence/insurance-2026-09-29/I-2-ja-ambiguous-mcp-server.log`から抜粋）:
+**Generated code and result from the final `execute`** (excerpt from `docs/evidence/insurance-2026-09-29/I-2-ja-ambiguous-mcp-server.log`):
 
 ```text
 # execute 2/2（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
@@ -343,7 +343,7 @@ Tool呼び出し順（`toolCalls`）: 日本語 `insurance_list_tools` → `insu
 2026-09-29T06:49:35.600872087Z Result: {'top_5': [{'product_name': '火災保険「住まいの安心」', 'total_paid_amount': 39563922}, {'product_name': '傷害保険「ケガの安心サポート」', 'total_paid_amount': 11654702}, {'product_name': '自動車保険「ドライブセーフ」', 'total_paid_amount': 5872134}, {'product_name': '医療保険「メディカルサポート」', 'total_paid_amount': 1250942}, {'product_name': 'ペット保険「わんにゃんメディカル」', 'total_paid_amount': 886584}], 'total_claims_processed': 50, 'paid_claims_count': 36}
 ```
 
-**上流Insurance APIのアクセスログ**（日本語の回、`docs/evidence/insurance-2026-09-29/I-2-ja-ambiguous-insurance-api.log`から抜粋）:
+**Upstream Insurance API access logs** (Japanese run; excerpt from `docs/evidence/insurance-2026-09-29/I-2-ja-ambiguous-insurance-api.log`):
 
 ```text
 2026-09-29T06:48:20.750465344Z [claim] INFO:     10.244.1.70:59230 - "GET /claims?limit=1 HTTP/1.1" 200 OK
@@ -355,42 +355,42 @@ Tool呼び出し順（`toolCalls`）: 日本語 `insurance_list_tools` → `insu
 2026-09-29T06:48:28.617310917Z [product] INFO:     10.244.1.70:49590 - "GET /products?skip=0&limit=100 HTTP/1.1" 200 OK
 ```
 
-## I-3: 新規保険料の試算
+## I-3: Simulate a new premium
 
-### テストの内容
+### Test description
 
-既存契約の保険料を参照せず、新規の自動車保険について試算Toolを使う。
+Use the premium simulation Tool for a new auto policy, without referring to premiums on existing policies.
 
-### インプット
+### Input
 
-- 日本語: 「既存契約の保険料ではなく、新規の自動車保険PRD-002を1990-01-01生・補償額300万円で試算し、月額と年額を教えてください。」
-- 英語: "Quote a new PRD-002 auto policy for a person born on 1990-01-01 with ¥3,000,000 coverage. Report the monthly and annual premium. Do not report premiums from existing policies."
+- Japanese: 「既存契約の保険料ではなく、新規の自動車保険PRD-002を1990-01-01生・補償額300万円で試算し、月額と年額を教えてください。」
+- English: "Quote a new PRD-002 auto policy for a person born on 1990-01-01 with ¥3,000,000 coverage. Report the monthly and annual premium. Do not report premiums from existing policies."
 
-### 期待する処理
+### Expected processing
 
-`product_id: PRD-002`、`birth_date: 1990-01-01`、`sum_insured: 3000000`で試算Toolを呼ぶ。日本語の回は`insurance_search` → `insurance_get_schema` → `insurance_execute`。英語の回は`insurance_list_tools` → `insurance_get_schema` → `insurance_execute`だった。**searchを使うかはLLMの判断で変わる**。日本語の回でsearchへ渡したqueryは証跡に記録されていない。
+Call the premium simulation Tool with `product_id: PRD-002`, `birth_date: 1990-01-01`, and `sum_insured: 3000000`. The Japanese run used `insurance_search` → `insurance_get_schema` → `insurance_execute`. The English run used `insurance_list_tools` → `insurance_get_schema` → `insurance_execute`. **Whether to use search depends on the LLM.** The query passed to search in the Japanese run was not recorded in the evidence.
 
-### 基準値
+### Baseline
 
-実行日の年齢で試算額が変わるため、固定の期待値は置かない。以下は**2026-09-29の実測値**。
+The quoted amount changes with age on the execution date, so there is no fixed expected value. The following is the **measured result for 2026-09-29**.
 
-| 年齢 | 月額 | 年額 |
+| Age | Monthly | Annual |
 |---:|---:|---:|
 | 36歳 | 4,580円 | 55,000円 |
 
-### アウトプット
+### Output
 
-日本語のブラウザ画面と英語のAPI直接送信の回答は、ともに36歳・月額4,580円・年額55,000円だった。英語回答全文は`docs/evidence/insurance-2026-09-29/I-3-en-answer.md`。英語の回の画面は無い。Opusが同じ引数でMCPの`execute`から試算Toolを直接呼んだ独立の確認でも、`monthly_premium: 4580`、`annual_premium: 55000`、`age: 36`、`base_annual: 55000`を得た。上流への呼び出しは`POST /simulations`が1回で、契約作成の`POST /policies`は無かった。
+Both the Japanese browser response and English direct API response reported age 36, monthly ¥4,580, and annual ¥55,000. Full English answer: `docs/evidence/insurance-2026-09-29/I-3-en-answer.md`. There is no screenshot of the English run. In a separate check, Opus called the premium simulation Tool directly from MCP `execute` with the same arguments and returned `monthly_premium: 4580`, `annual_premium: 55000`, `age: 36`, and `base_annual: 55000`. The upstream received one `POST /simulations`; there was no policy creation `POST /policies`.
 
-### 画面キャプチャ
+### Screenshot
 
-![I-3 日本語のChat UI実行結果](assets/images/chat-ui-insurance-i3-premium-simulation.png)
+![I-3 Japanese Chat UI result](assets/images/chat-ui-insurance-i3-premium-simulation.png)
 
-### ログ
+### Logs
 
-Tool呼び出し順（`toolCalls`）: 日本語 `insurance_search` → `insurance_get_schema` → `insurance_execute`。英語 `insurance_list_tools` → `insurance_get_schema` → `insurance_execute`。
+Tool call order (`toolCalls`): Japanese `insurance_search` → `insurance_get_schema` → `insurance_execute`. English `insurance_list_tools` → `insurance_get_schema` → `insurance_execute`.
 
-**最後の`execute`の生成コードと結果**（`docs/evidence/insurance-2026-09-29/I-3-ja-mcp-server.log`から抜粋）:
+**Generated code and result from the final `execute`** (excerpt from `docs/evidence/insurance-2026-09-29/I-3-ja-mcp-server.log`):
 
 ```text
 # execute 1/1（ログへの出力時刻は次のリクエスト到着時。Code Modeのrunnerは1リクエスト遅れて書き出す）
@@ -408,36 +408,36 @@ Tool呼び出し順（`toolCalls`）: 日本語 `insurance_search` → `insuranc
 2026-09-29T06:50:02.489457793Z Result: {'product_id': 'PRD-002', 'product_name': '自動車保険「ドライブセーフ」', 'category': '自動車保険', 'age': 36, 'sum_insured': 3000000, 'monthly_premium': 4580, 'annual_premium': 55000, 'breakdown': {'base_annual': 55000, 'variable_annual': 0, 'smoker_surcharge': 0, 'age_factor': 1.0}}
 ```
 
-**上流Insurance APIのアクセスログ**（日本語の回、`docs/evidence/insurance-2026-09-29/I-3-ja-insurance-api.log`から抜粋）:
+**Upstream Insurance API access logs** (Japanese run; excerpt from `docs/evidence/insurance-2026-09-29/I-3-ja-insurance-api.log`):
 
 ```text
 2026-09-29T06:49:45.619513883Z [simulation] INFO:     10.244.1.70:56102 - "POST /simulations HTTP/1.1" 200 OK
 ```
 
-## searchについての所見
+## Notes on search
 
-2026-09-29にMCPへ直接送った検索の実測。仕様のsummary／descriptionは英語で登録されている。
+Measured results from searches sent directly to MCP on 2026-09-29. The spec summaries / descriptions are registered in English.
 
-| query | 件数 | 上位・所見 |
+| Query | Matches | Top result / observation |
 |---|---:|---|
-| `申込一覧の取得` | 0 | 日本語ではヒットしなかった |
-| `list applications` | 9 | `list_applications`が1位 |
-| `premium quote` | 7 | 試算（simulate）が1位 |
-| `underwriting` | 2 | Tool名ではなくdescriptionにある英単語でもヒット |
-| `insurance products` | 32 | Source名に`insurance`を含むため全Toolにヒットし、絞り込みにならない |
+| `申込一覧の取得` | 0 | No hit for Japanese query |
+| `list applications` | 9 | `list_applications` ranked first |
+| `premium quote` | 7 | Premium simulation (`simulate`) ranked first |
+| `underwriting` | 2 | English words in descriptions can match even when absent from Tool names |
+| `insurance products` | 32 | Every Tool matched because Source names contain `insurance`; does not narrow results |
 
-## execute内のimport
+## Imports in execute
 
-2026-09-29に両方のMCP Serverで同じ結果を確認した。
+The same results were confirmed on both MCP Servers on 2026-09-29.
 
-| 結果 | モジュール |
+| Result | Modules |
 |---|---|
-| 成功 | `asyncio`、`json`、`math`、`re`、`datetime` |
-| `ModuleNotFoundError` | `collections`、`statistics` |
+| Success | `asyncio`, `json`, `math`, `re`, `datetime` |
+| `ModuleNotFoundError` | `collections`, `statistics` |
 
-## 検証方法メモ
+## Verification method notes
 
-- 上流のアクセスログはInsuranceの各Podから`kubectl logs --timestamps`で取得し、`/health`を除いた。runnerの生成コードと`Result:`も同じ方法で取得した。
-- runnerは生成コードと`Result:`を**1リクエスト遅れて**書き出す。表示タイムスタンプは次のリクエストが届いた時刻なので、`docs/evidence/insurance-2026-09-29/chat-ui-chat_completed.log`の`toolCalls`順でケースに割り当てる。
-- 書き込み操作はしない。登録したOpenAPI仕様には更新・削除Toolも含まれるため、デモでは参照とデータを変更しない試算に限定する。データをseedへ戻す場合は`kubectl -n insurance rollout restart deploy`を実行する。
-- 顧客の個人情報（氏名、マイナンバーに似た値、住所、電話番号）を回答や公開ログ抜粋に出さない。
+- Upstream access logs were captured from each Insurance Pod using `kubectl logs --timestamps`, excluding `/health`. Runner generated code and `Result:` were captured the same way.
+- The runner writes generated code and `Result:` **one request late**. The displayed timestamp is when the next request arrived, so assign records to cases using the `toolCalls` order in `docs/evidence/insurance-2026-09-29/chat-ui-chat_completed.log`.
+- No write operations were performed. The registered OpenAPI specs include update and delete Tools too, so the demo is limited to reading and simulations that do not change data. To restore seed data, run `kubectl -n insurance rollout restart deploy`.
+- Do not include customer personal information (names, values resembling My Number identifiers, addresses, or phone numbers) in answers or public log excerpts.

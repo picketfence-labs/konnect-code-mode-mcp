@@ -1,5 +1,7 @@
 # INSTRUCTIONS — デモ検証手順
 
+> English: [INSTRUCTIONS.en.md](INSTRUCTIONS.en.md)
+
 Kong Konnect の **Context Mesh / Code Mode** デモの**デプロイ後の検証手順**をまとめる。
 上流 API（mock-api）の大量データをサンドボックス内で加工し **Top5 だけ** を AI エージェント
 に返し、**LLM トークン量が削減されること**を確認するのがゴール。

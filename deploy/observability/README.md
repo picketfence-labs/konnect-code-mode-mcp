@@ -1,5 +1,7 @@
 # ログ基盤（Grafana Loki + Promtail）デプロイ手順
 
+> English: [README.en.md](README.en.md)
+
 mock-api・MCP Server・chat-ui のログを集約するログ基盤。技術選定・方針の背景は
 [ADR-0006](../../docs/decisions/0006-log-observability-stack.md)を参照。
 

@@ -1,5 +1,7 @@
 # Context Mesh / Code Mode 調査メモ
 
+> English: [CODE_MODE.en.md](CODE_MODE.en.md)
+
 対象リポジトリ: <https://github.com/kong-gateway/context-mesh>
 調査日: 2026-07-04
 

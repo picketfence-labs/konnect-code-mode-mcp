@@ -1,5 +1,7 @@
 # mock-api — 世界主要都市 月平均気温 モック API（正規化版）
 
+> English: [README.en.md](README.en.md)
+
 Code Mode デモ用の「大量レコードを返す上流 API」。ローカル単体検証と、
 Konnect Code Mode MCP の実証テストの両方で使用する。
 

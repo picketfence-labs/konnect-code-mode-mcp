@@ -1,5 +1,7 @@
 # Minikube デプロイ手順
 
+> English: [README.en.md](README.en.md)
+
 本ファイルは mock-api のデプロイ手順。Kong Operator インストール + Konnect
 Control Plane/DataPlane 接続手順は [deploy/kong-operator/README.md](kong-operator/README.md)、
 Chat UI のデプロイ手順は [deploy/chat-ui/](chat-ui/)、ログ基盤（Grafana Loki + Promtail）の
