@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: chat-ui
-          image: chat-ui:0.1.0
+          image: chat-ui:0.2.0
           # minikube にローカルビルド/ロードしたイメージを使う（外部レジストリ不要）
           imagePullPolicy: IfNotPresent
           ports:

@@ -157,9 +157,11 @@ MCP_INSURANCE_URL=http://<service名>.default.svc.cluster.local/mcp/kong-insuran
 
 ```bash
 eval $(minikube docker-env)
-docker build -t chat-ui:0.1.0 chat-ui/
+docker build -t chat-ui:0.2.0 chat-ui/
 eval $(minikube docker-env -u)
 ```
+
+`imagePullPolicy: IfNotPresent`のため、同じタグで再ビルドしても、既に動いているPodは古いイメージのまま起動し直すことがある。Chat UIを変更したら、`chat-ui/package.json`の`version`と`deploy/chat-ui/chat-ui.yaml`の`image`のタグを上げてからビルドする（0.2.0で2つのMCP Serverへの同時接続に対応）。
 
 ### 3. Gemini APIキーを Secret として登録
 
