@@ -29,11 +29,13 @@ namespace ですでに稼働している（イメージ `v0.1.1`）。既存の 
 既存の Kubernetes Service 名と DNS（`<svc>.insurance.svc.cluster.local:8000`）を利用する。
 
 Context Mesh には6つの Source を登録し、一つの MCP Server `kong-insurance` から公開する。
-各 Source には **bundle の OpenAPI 仕様（v0.1.1、OpenAPI 3.1.0）をそのまま**登録し、変更するのは
-上流 URL（`servers`）だけとする。bundle の `servers` は例示用のドメイン（`https://api.example.com/<svc>`）
-なので、`http://<svc>.insurance.svc.cluster.local:8000` に置き換える。「手元の OpenAPI 仕様を
-そのまま登録するだけで MCP Server 化できる」ことが、このデモで示したい価値だからである。
-本 repo には仕様のコピーを置かず、bundle の v0.1.1 タグを参照する。
+各 Source には **bundle の OpenAPI 仕様（v0.1.2、OpenAPI 3.1.0）を無変更で**登録する。
+「手元の OpenAPI 仕様をそのまま登録するだけで MCP Server 化できる」ことが、このデモで示したい
+価値だからである。v0.1.1 までの仕様は `servers` が例示用のドメイン（`https://api.example.com/<svc>`）
+だったため、bundle 側で `http://<svc>.insurance.svc.cluster.local:8000` に改めた
+（kong-api-bundle-insurance PR #19、v0.1.2）。本 repo には仕様のコピーを置かず、bundle の v0.1.2
+タグを参照する。Pod のイメージは `v0.1.1` のままとする（v0.1.2 との差分のうち `services/` 配下は
+`openapi.yaml` だけで、API の動作は同じ）。
 
 操作は絞り込まず、書き込み系（POST / PUT / DELETE）と `/health` も含めた32操作を公開する。
 書き込み系は Chat UI の指示で使わせないようにし、データが書き換わった場合は Pod を再起動して
@@ -46,11 +48,13 @@ seed に戻す（各サービスはデータをプロセス内のメモリに保
 - すでに稼働しているサービスをそのまま使うことで、不要な Pod や Gateway を作らずに済む。
 - 固定コピーとタグ固定により、fresh clone でも同じマニフェストを適用でき、現在のクラスタへ
   適用した場合も同一のオブジェクトになる。
-- OpenAPI 仕様は `servers` 以外を変えないので、元の仕様と登録内容がずれない。Context Mesh は
+- OpenAPI 仕様を変えずに登録するので、元の仕様と登録内容がずれない。登録した仕様の `servers` は
+  MCP Server が使う上流 URL の既定値になる（runner のコードに埋め込まれる）。Context Mesh は
   OpenAPI 3.1.0 をそのまま受け付ける（2026-09-28、bundle の仕様で32操作が Tool 化されることを確認）。
 - 当初は「3.0.3 へ変換し、読み取りと試算の11操作に絞る」案を採った（World Weather の仕様が
   3.0.3 だったことからの推測）。しかし 3.1.0 が受け付けられることを確認し、デモの価値を優先して
-  上記に改めた（同日）。
+  「`servers` だけ置き換えて登録する」案に改めた（同日）。さらに、`servers` の修正を bundle 側へ
+  入れ、無変更で登録できるようにした（2026-09-29、v0.1.2）。
 
 ## 影響・トレードオフ
 
