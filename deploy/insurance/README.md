@@ -93,8 +93,10 @@ MCP URL は `http://127.0.0.1/mcp/kong-insurance` です（`minikube tunnel` 経
 
 - 顧客データは架空ですが、マイナンバーに似た値を含みます。デモ回答に個別の顧客行を出力しないで
   ください。
-- Code Mode の `execute` で動く Python では、`import` が失敗します（`kong-insurance` の runner
-  0.6.0 で `collections` の import が失敗）。集計は組み込みの機能だけで書きます。
+- Code Mode の `execute` で動く Python では、標準ライブラリの一部が import できません
+  （2026-09-29 の観測。`collections`、`statistics` は `ModuleNotFoundError`。`asyncio`、`json`、`math`、
+  `re`、`datetime` は成功。World Weather と `kong-insurance` の両方で同じ結果）。集計は組み込みの
+  機能だけで書きます。
 - `search` は日本語のクエリではヒットしません（2026-09-29 時点の観測）。検索の対象は Tool 名と
   英語の description で、単語単位の完全一致です。英単語で検索します（例: `list applications`、
   `premium quote`、`paid claims`）。Source 名が `property-insurance-` で始まるため、`insurance` や

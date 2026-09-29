@@ -20,7 +20,7 @@ const COMMON_PROMPT = `あなたはKong Konnect Context Mesh（Code Mode MCP）�
 
 searchは日本語のクエリでは0件になります。必ず英単語で検索してください。検索の対象はTool名（_と-で区切った単語）と英語のdescriptionで、
 単語単位の完全一致です。単数形と複数形は別の語として扱われ、camelCaseは分割されません。探しにくければlist_toolsで一覧を確認してください。
-execute内のPythonでは、importが失敗する場合があります（Insuranceでは標準ライブラリのimportも失敗します）。importは使わず、dict、list、sorted、sum、roundなどの組み込み機能だけで集計してください。
+execute内のPythonでは、標準ライブラリの一部（collections、statistics等）がimportできません。importは使わず、dict、list、sorted、sum、roundなどの組み込み機能だけで集計してください。
 生のレコードをLLMのコンテキストへ載せず、execute内で取得、ループ、集計、ソートして少数件の結果だけをreturnしてください。`
 
 const WEATHER_PROMPT = `World Weatherの質問にはweather_で始まるmeta-toolを使います。
