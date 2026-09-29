@@ -20,6 +20,31 @@ Insuranceのユースケースでは、手元のOpenAPI仕様を無変更でCont
 | 日本語の質問 | ブラウザ（Playwright）から実行し、画面を保存 |
 | 英語の質問 | Chat UIのAPI（`POST /chat-ui/api/chat`）へ直接送信。画面キャプチャは無い。回答全文は`docs/evidence/insurance-2026-09-29/I-*-en-answer.md` |
 
+## 対象APIとデータ構成
+
+Insurance bundle（[kong-api-bundle-insurance](https://github.com/picketfence-labs/kong-api-bundle-insurance)）は、損害保険の業務を想定した6つのサービスをREST APIとして提供する。各サービスが独立したAPI（Source）で、MCP Server `kong-insurance`はその6つをまとめて公開する。データはseedの固定値で、Podを再起動すると初期状態に戻る。
+
+[![kong-api-bundle-insurance データモデル（ER図）](assets/images/insurance-data-model.png)](https://picketfence-labs.github.io/diagrams/c5bfcf04d3a2/)
+
+画像をクリックすると、インタラクティブ版（パン・ズーム・検索に対応）が開く。ER図とフィールド定義の出典は[bundleの`docs/DATA.md`](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.3/docs/DATA.md)（v0.1.3）。
+
+| サービス | 役割 | 件数 | 主なキーと関係 |
+|---|---|---:|---|
+| product | 商品マスタ（火災・自動車・傷害・医療・ペット） | 5 | `product_id`（`PRD-001`〜`PRD-005`） |
+| customer | 顧客マスタ | 100 | `customer_id`。申込・契約・請求から参照される |
+| application | 申込 | 300 | `product_id`、`customer_id`。うち200件が契約になり、`resulting_policy_id`を持つ |
+| policy | 契約 | 200 | `application_id`（成立した申込と1:1）、`product_id`、`customer_id` |
+| claim | 保険金請求 | 50 | `policy_id`（請求対象の契約）、`customer_id`。`status`と`claim_amount_paid`を持つ |
+| simulation | 保険料試算 | – | `product_id`と年齢・保険金額などから計算するだけで、保存しない |
+
+テストケースがたどる関係は次のとおり。
+
+- I-1: productごとに、applicationとpolicyの件数を`product_id`で数えて比べる
+- I-2: claim → policy（`policy_id`）→ product（`product_id`）とたどり、請求を商品に割り当てる。claimは`product_id`を持たないため、この結合が必要になる
+- I-3: simulationに`product_id`・生年月日・保険金額を渡す。データは変更しない
+
+customerには氏名・住所・マイナンバー形式の値などが含まれる（架空のデータ）。このテストでは、顧客の個人情報を回答にもログにも出さない。
+
 ## 実行方法
 
 Chat UIにWorld Weather（`/mcp/world-monthly-temperature`）とInsurance（`/mcp/kong-insurance`）の両方のURLを設定し、各ケースの質問を送る。Tool名の`weather_`／`insurance_`で接続先を区別する。設定手順は[deploy/README.mdのChat UI節](deploy/README.md#chat-uinextjs--vercel-ai-sdk--mcp-client)と[deploy/insurance/README.md](deploy/insurance/README.md)を参照。

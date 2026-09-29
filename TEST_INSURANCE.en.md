@@ -20,6 +20,31 @@ Based on measured evidence captured on 2026-09-29 in `docs/evidence/insurance-20
 | Japanese questions | Run from a browser (Playwright); screenshots saved. |
 | English questions | Sent directly to the Chat UI API (`POST /chat-ui/api/chat`). No screenshots. Full answers are in `docs/evidence/insurance-2026-09-29/I-*-en-answer.md`. |
 
+## Target APIs and data model
+
+The Insurance bundle ([kong-api-bundle-insurance](https://github.com/picketfence-labs/kong-api-bundle-insurance)) provides six services for property and casualty insurance operations as REST APIs. Each service is a separate API (Source), and the MCP Server `kong-insurance` exposes all six together. The data is a fixed seed and returns to its initial state when the Pods restart.
+
+[![kong-api-bundle-insurance data model (ER diagram)](assets/images/insurance-data-model.png)](https://picketfence-labs.github.io/diagrams/c5bfcf04d3a2/)
+
+Click the image to open the interactive version (supports pan, zoom, and search). The ER diagram and field definitions come from [`docs/DATA.md` in the bundle](https://github.com/picketfence-labs/kong-api-bundle-insurance/blob/v0.1.3/docs/DATA.md) (v0.1.3).
+
+| Service | Role | Records | Main keys and relationships |
+|---|---|---:|---|
+| product | Product master (fire, auto, accident, medical, pet) | 5 | `product_id` (`PRD-001` to `PRD-005`) |
+| customer | Customer master | 100 | `customer_id`. Referenced by applications, policies, and claims |
+| application | Application | 300 | `product_id`, `customer_id`. 200 of them became policies and have `resulting_policy_id` |
+| policy | Policy | 200 | `application_id` (1:1 with the accepted application), `product_id`, `customer_id` |
+| claim | Insurance claim | 50 | `policy_id` (the claimed policy), `customer_id`. Has `status` and `claim_amount_paid` |
+| simulation | Premium simulation | – | Only calculates from `product_id`, age, coverage amount, and so on; stores nothing |
+
+The test cases follow these relationships:
+
+- I-1: For each product, count applications and policies by `product_id` and compare them
+- I-2: Follow claim → policy (`policy_id`) → product (`product_id`) to assign each claim to a product. Claims do not have `product_id`, so this join is required
+- I-3: Pass `product_id`, date of birth, and coverage amount to simulation. No data is changed
+
+customer contains names, addresses, My Number-format values, and similar fields (fictitious data). These tests do not output customer personal information in answers or logs.
+
 ## How to run
 
 Configure both World Weather (`/mcp/world-monthly-temperature`) and Insurance (`/mcp/kong-insurance`) URLs in Chat UI, then submit each case's question. Tool names `weather_` / `insurance_` distinguish the destination. See [Chat UI settings in deploy/README.md](deploy/README.en.md#chat-ui-nextjs--vercel-ai-sdk--mcp-client) and [deploy/insurance/README.md](deploy/insurance/README.en.md) for setup.
